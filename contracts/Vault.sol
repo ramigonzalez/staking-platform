@@ -35,6 +35,6 @@ contract Vault {
         require(this.isAdmin(_admin), "Account is not an admin");
         require(administratorsCount > 1, "There must be at least one admin");
         administratorsCount -= 1;
-        administrators[_admin] = false;
+        delete administrators[_admin];
     }
 }
