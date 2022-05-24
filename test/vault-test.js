@@ -9,6 +9,7 @@ let provider, signer, account1, account2, deployedContractInstance;
 
 // Constant
 const contractName              = "Vault";
+const nullAddress = "0x0000000000000000000000000000000000000000";
 
 describe(contractName, function () {
   before(async() => {
@@ -47,6 +48,10 @@ describe(contractName, function () {
     await expect(deployedContractInstance.addAdmin(signer.address)).to.be.revertedWith('Account is already an admin');
   });
 
+  it("0x0 cannot be added as admin", async() => {
+    await expect(deployedContractInstance.addAdmin(nullAddress)).to.be.revertedWith('This account is not allowed to be an admin');
+  });
+
   it("Non admin cannot remove admin", async() => {
     const operation = deployedContractInstance.connect(account2).removeAdmin(signer.address);
     await expect(operation).to.be.revertedWith('User must be administrator to perform this operation');
@@ -67,5 +72,10 @@ describe(contractName, function () {
   it("Admin cannot remove himself if he is the only admin", async() => {
     await expect(deployedContractInstance.connect(account1).removeAdmin(account1.address))
       .to.be.revertedWith('There must be at least one admin');
+  });
+
+  it("Removing 0x0 from admin fails", async() => {
+    await expect(deployedContractInstance.connect(account1).removeAdmin(nullAddress))
+      .to.be.revertedWith('This account is never an admin');
   });
 });
