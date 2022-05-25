@@ -4,46 +4,92 @@ pragma solidity 0.8.9;
 import 'hardhat/console.sol';
 
 contract TokenContract {
-    string constant name = 'Niery token papa'; 
-    string constant symbol = 'NTP';
-    uint256 constant decimals = 18;
-    uint256 public totalSupply; //puede ser external pero hay que ver como se llama a una propiedad o metodo extenal desde otro contrato.
+    string constant _name = 'Niery token papa';
+    string constant _symbol = 'NTP';
+    uint8 constant _decimals = 18;
+    uint256 public _totalSupply; //puede ser external pero hay que ver como se llama a una propiedad o metodo extenal desde otro contrato.
 
-    mapping(address => uint256) public balances;
+    mapping(address => uint256) public _balances;
+    mapping(address => mapping(address => uint256)) public _allowed;
 
-    constructor() {
-        totalSupply = 10000000;
+    event Transfer(address indexed _from, address indexed _to, uint256 _value);
+    event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+
+    constructor(uint256 _initialAmount) {
+        require(_initialAmount > 0, 'Initial amount must be greater than zero');
+        _totalSupply = _initialAmount;
+        console.log('TokenContract hold the initial supply amount for now');
+        _balances[address(msg.sender)] = _initialAmount;
+        emit Transfer(address(0x0), address(this), _initialAmount);
     }
 
     function balanceOf(address _owner) external view returns (uint256) {
-        return balances[_owner];
+        return _balances[_owner];
     }
 
     /**
+     * @dev Transfers @param _value amount of tokens to address @param _to, and MUST fire the Transfer event.
+     * The function SHOULD throw if the message caller’s account balance does not have enough tokens to spend.
      * @param _to address that will receive tokens
-     * @param _value amount of tokens to transfer
+     * @param _value amount of tokens to transfer. Transfers of 0 values MUST be treated as normal transfers
      * @return true if the amount was trafsfered correctly
      */
     function transfer(address _to, uint256 _value) external returns (bool) {
-        require(_to != address(0), "Receiver cannot be address(0)");
-        require(_value > 0, "Amount must be positive");
-        require(
-            balances[msg.sender] >= _value,
-            "Sender has insufficient tokens to transfer"
-        );
-        balances[msg.sender] -= _value;
-        balances[_to] += _value;
+        require(_to != address(0), 'Receiver cannot be address(0)');
+        // require(_value > 0, 'Amount must be positive'); // La quite porque en el standard ERC-20 dice que las transferencias de valor 0 deben ser tratadas como una transferencia normal.
+        require(_balances[msg.sender] >= _value, 'Sender has insufficient tokens to transfer');
+        _balances[msg.sender] -= _value;
+        _balances[_to] += _value;
+        emit Transfer(msg.sender, _to, _value);
         return true;
     }
 
+    /**
+     * @dev Is used for a withdraw workflow, allowing contrats to transfer tokens on @param _from behalf.
+     * It can be used to allow a contract to transfer tokens on other's behalf and/or to charge fees in sub-currencies.
+     * The function SHOULD throw unless the _from account has deliberately authorized the msg.sender of the message via some mechanism
+     * @param _to address that will receive tokens
+     * @param _value amount of tokens to transfer. Transfers of 0 values MUST be treated as normal transfers
+     * @return true if the amount was trafsfered correctly
+     *
+     */
     function transferFrom(
         address _from,
         address _to,
         uint256 _value
-    ) external returns (bool) {}
+    ) external returns (bool) {
+        require(_from != address(0), '_from cannot be adress(0)');
+        require(_to != address(0), '_to cannot be adress(0)');
+        require(_value <= _allowed[_from][msg.sender]); // el que firma la transaccion tiene que estar autorizado a gastar toens de _from
+        require(_balances[_from] >= _value, '_from has insufficient tokens to transfer');
+
+        _balances[_from] -= _value;
+        _balances[_to] += _value;
+        _allowed[_from][msg.sender] -= _value; // le resto monto permitido porque me lo acabo de gastar.
+
+        emit Transfer(_from, _to, _value);
+        return true;
+    }
 
     /**
-    function approve(address _spender, uint256 _value) returns (bool) {}
-    function allowance(address _owner, address _spender) returns (uint256) {}
-    */
+     * @dev Allows @param _spender to withdraw from your account multiple times,
+     * up to the @param _value amount. If this function is called again it overwrites the current allowance with @param _value.
+     * @param _spender who will be allowed to use tokens on msg.sender's behalf.
+     * @param _value amount of tokens allowed to use
+     * @return true if the amount was allowed correctly
+     */
+    function approve(address _spender, uint256 _value) external returns (bool) {
+        require(_spender != address(0), 'Spender cannot be adress(0)');
+        _allowed[msg.sender][_spender] = 0; // lo dice el standard ERC-20
+        _allowed[msg.sender][_spender] = _value;
+        emit Approval(msg.sender, _spender, _allowed[msg.sender][_spender]);
+        return true;
+    }
+
+    /**
+     * @dev Returns the amount which @param _spender is still allowed to withdraw from @param _owner.
+     */
+    function allowance(address _owner, address _spender) external view returns (uint256) {
+        return _allowed[_owner][_spender];
+    }
 }
