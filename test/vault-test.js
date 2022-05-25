@@ -49,7 +49,7 @@ describe(contractName, function () {
   });
 
   it("0x0 cannot be added as admin", async() => {
-    await expect(deployedContractInstance.addAdmin(nullAddress)).to.be.revertedWith('This account is not allowed to be an admin');
+    await expect(deployedContractInstance.addAdmin(nullAddress)).to.be.revertedWith('The provided address is not valid for an admin');
   });
 
   it("Non admin cannot remove admin", async() => {
@@ -76,6 +76,6 @@ describe(contractName, function () {
 
   it("Removing 0x0 from admin fails", async() => {
     await expect(deployedContractInstance.connect(account1).removeAdmin(nullAddress))
-      .to.be.revertedWith('This account is never an admin');
+      .to.be.revertedWith('The provided address is not valid for an admin');
   });
 });

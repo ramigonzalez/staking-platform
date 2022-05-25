@@ -12,6 +12,11 @@ contract Vault {
         _;
     }
 
+    modifier isValidAddress(address _address) {
+        require(_address != address(0) && _address != address(this), "The provided address is not valid for an admin");
+        _;
+    } 
+
     constructor() {
         administratorsCount = 1;
         administrators[msg.sender] = true;
@@ -25,15 +30,13 @@ contract Vault {
         return administrators[_admin];
     }
 
-    function addAdmin(address _admin) external onlyAdmin {
-        require(_admin != address(0), "This account is not allowed to be an admin");
+    function addAdmin(address _admin) external onlyAdmin isValidAddress(_admin) {
         require(!this.isAdmin(_admin), "Account is already an admin");
         administratorsCount += 1;
         administrators[_admin] = true;
     }
 
-    function removeAdmin(address _admin) external onlyAdmin {
-        require(_admin != address(0), "This account is never an admin");
+    function removeAdmin(address _admin) external onlyAdmin isValidAddress(_admin) {
         require(this.isAdmin(_admin), "Account is not an admin");
         require(administratorsCount > 1, "There must be at least one admin");
         administratorsCount -= 1;
