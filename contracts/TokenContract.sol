@@ -60,7 +60,7 @@ contract TokenContract {
     ) external returns (bool) {
         require(_from != address(0), '_from cannot be adress(0)');
         require(_to != address(0), '_to cannot be adress(0)');
-        require(_value <= _allowed[_from][msg.sender]); // el que firma la transaccion tiene que estar autorizado a gastar toens de _from
+        require(_value <= _allowed[_from][msg.sender], "Tx signer is not allowed to transfer the desired amount on _from's behalf"); // el que firma la transaccion tiene que estar autorizado a gastar toens de _from
         require(_balances[_from] >= _value, '_from has insufficient tokens to transfer');
 
         _balances[_from] -= _value;
