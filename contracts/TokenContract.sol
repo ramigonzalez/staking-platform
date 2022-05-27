@@ -18,7 +18,7 @@ contract TokenContract {
     constructor(uint256 _initialAmount) {
         require(_initialAmount > 0, 'Initial amount must be greater than zero');
         totalSupply = _initialAmount;
-        console.log('TokenContract hold the initial supply amount for now');
+        //console.log('TokenContract hold the initial supply amount for now');
         _balances[address(msg.sender)] = _initialAmount;
         emit Transfer(address(0x0), address(this), _initialAmount);
     }
@@ -79,7 +79,7 @@ contract TokenContract {
      * @return true if the amount was allowed correctly
      */
     function approve(address _spender, uint256 _value) external returns (bool) {
-        require(_spender != address(0), 'Spender cannot be adress(0)');
+        require(_spender != address(0), '_spender cannot be adress(0)');
         _allowed[msg.sender][_spender] = 0; // lo dice el standard ERC-20
         _allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _allowed[msg.sender][_spender]);
