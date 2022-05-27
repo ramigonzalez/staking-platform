@@ -19,6 +19,8 @@ describe('xxx', async () => {
         expect(balanceOfDeployer).to.equal(1000);
     });
 
+
+    // See how await is before EXPECT method
     it('revert with text', async () => {
         await expect(token.isAContract()).to.be.revertedWith('un texto');
     });
