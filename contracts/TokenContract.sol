@@ -4,10 +4,10 @@ pragma solidity 0.8.9;
 import 'hardhat/console.sol';
 
 contract TokenContract {
-    string constant _name = 'Niery token papa';
-    string constant _symbol = 'NTP';
-    uint8 constant _decimals = 18;
-    uint256 public _totalSupply; //puede ser external pero hay que ver como se llama a una propiedad o metodo extenal desde otro contrato.
+    string constant public name = 'Niery token papa';
+    string constant public symbol = 'NTP';
+    uint8 constant public decimals = 18;
+    uint256 public totalSupply; //puede ser external pero hay que ver como se llama a una propiedad o metodo extenal desde otro contrato.
 
     mapping(address => uint256) public _balances;
     mapping(address => mapping(address => uint256)) public _allowed;
@@ -17,7 +17,7 @@ contract TokenContract {
 
     constructor(uint256 _initialAmount) {
         require(_initialAmount > 0, 'Initial amount must be greater than zero');
-        _totalSupply = _initialAmount;
+        totalSupply = _initialAmount;
         console.log('TokenContract hold the initial supply amount for now');
         _balances[address(msg.sender)] = _initialAmount;
         emit Transfer(address(0x0), address(this), _initialAmount);
