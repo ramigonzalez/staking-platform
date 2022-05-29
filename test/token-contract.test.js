@@ -7,61 +7,62 @@ const TokenContract_ABI = require('../artifacts/contracts/TokenContract.sol/Toke
 
 use(solidity);
 
-const [wallet, walletTo, allowedWallet] = provider.getWallets();
+describe('TokenContract tests', async () => {
+    // Constants
+    const TOKEN_NAME = 'Niery token papa';
+    const TOKEN_SYMBOL = 'NTP';
+    const TOKEN_DECIMAL = 18;
+    const INITIAL_AMOUNT = 10000000;
 
-// Constants
-const TOKEN_NAME = 'Niery token papa';
-const TOKEN_SYMBOL = 'NTP';
-const TOKEN_DECIMAL = 18;
-const INITIAL_AMOUNT = 10000000;
+    let tokenContract;
 
-let tokenContract;
+    const [wallet, walletTo, allowedWallet] = provider.getWallets();
 
-describe('1. TokenContract information', async () => {
-    // Before execute the test suit will deploy the contract once.
-    before(async () => {
-        tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+    describe('Deployment', async () => {
+        // Before execute the test suit will deploy the contract once.
+        before(async () => {
+            tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+        });
+
+        it(`Token name should be: "${TOKEN_NAME}"`, async () => {
+            const tokenName = await tokenContract.name();
+            expect(tokenName).to.equal(TOKEN_NAME);
+        });
+
+        it(`Token symbol should be: "${TOKEN_SYMBOL}"`, async () => {
+            const tokenSymbol = await tokenContract.symbol();
+            expect(tokenSymbol).to.equal(TOKEN_SYMBOL);
+        });
+
+        it(`Token decimals should be: ${TOKEN_DECIMAL}`, async () => {
+            const tokenDecimal = await tokenContract.decimals();
+            expect(tokenDecimal).to.equal(TOKEN_DECIMAL);
+        });
+
+        it('Token total supply should be equal to initial amount', async () => {
+            const tokenTotalSupply = await tokenContract.totalSupply();
+            expect(tokenTotalSupply).to.equal(INITIAL_AMOUNT);
+        });
     });
 
-    it(`Token name is: "${TOKEN_NAME}"`, async () => {
-        const tokenName = await tokenContract.name();
-        expect(tokenName).to.equal(TOKEN_NAME);
-    });
-
-    it(`Token symbol is: "${TOKEN_SYMBOL}"`, async () => {
-        const tokenSymbol = await tokenContract.symbol();
-        expect(tokenSymbol).to.equal(TOKEN_SYMBOL);
-    });
-
-    it(`Token decimals is: ${TOKEN_DECIMAL}`, async () => {
-        const tokenDecimal = await tokenContract.decimals();
-        expect(tokenDecimal).to.equal(TOKEN_DECIMAL);
-    });
-
-    it('Token total supply is setted on contract init', async () => {
-        const tokenTotalSupply = await tokenContract.totalSupply();
-        expect(tokenTotalSupply).to.equal(INITIAL_AMOUNT);
-    });
-});
-
-describe('2. Token contract behaviour', async () => {
-    describe('2.1. Initial behaviour', async () => {
+    describe('constructor()', async () => {
         beforeEach(async () => {
             tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
         });
 
-        it('Contract constructor fails with initial amount less than zero', async () => {
+        it('Should revert with initial amount less than zero', async () => {
             const initialAmount = 0;
             await expect(deployContract(wallet, TokenContract_ABI, [initialAmount])).to.be.revertedWith('Initial amount must be greater than zero');
         });
 
-        it('Contract constructor initial amount to wallet deployer', async () => {
+        it('Should assign initial amount to the transation signer', async () => {
             const walletDeployerBalance = await tokenContract.balanceOf(wallet.address);
             expect(walletDeployerBalance).to.equal(INITIAL_AMOUNT);
         });
 
-        it('Contract constructor emit Transfer event', async () => {
+        it('Should emit Transfer event with proper parameters', async () => {
             const deployedContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+
             //await expect(deployedContract).to.emit(deployedContract, 'Transfer').withArgs(ZERO_ADDRESS, wallet.address, INITIAL_AMOUNT);
 
             expect(false).to.be.true;
@@ -70,35 +71,35 @@ describe('2. Token contract behaviour', async () => {
         });
     });
 
-    describe('2.2. Transfer from sender to other account', async () => {
-        describe('Successfully transfer()', async () => {
+    describe('transfer()', async () => {
+        describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
             });
 
-            it('Transfer sufficient amount', async () => {
+            it('Should transfer requested amount and modify both balances', async () => {
                 await expect(() => tokenContract.transfer(walletTo.address, 200)).to.changeTokenBalances(tokenContract, [wallet, walletTo], [-200, 200]);
             });
 
-            it('Transfer zero amount ok', async () => {
+            it('Should execute zero amount transfer with as normal transfer', async () => {
                 await expect(() => tokenContract.transfer(walletTo.address, 0)).to.changeTokenBalances(tokenContract, [wallet, walletTo], [-0, 0]);
             });
 
-            it('Transfer event is emitted', async () => {
+            it('Should emit Transfer event with proper parameters', async () => {
                 await expect(tokenContract.transfer(walletTo.address, 100)).to.be.emit(tokenContract, 'Transfer').withArgs(wallet.address, walletTo.address, 100);
             });
         });
 
-        describe('Reverted transaction transfer()', async () => {
+        describe('Reverted transactions', async () => {
             beforeEach(async () => {
                 tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
             });
 
-            it('Transfer to zero address account', async () => {
+            it('Should revert transactions since "_to" is ZERO_ADDRESS', async () => {
                 await expect(tokenContract.transfer(ZERO_ADDRESS, 100)).to.be.revertedWith('Receiver cannot be address(0)');
             });
 
-            it('Transfer from address with 0 balance', async () => {
+            it('Should revert transactions since "sender" has 0 balance', async () => {
                 // Change msg.sender
                 const tokenContractFromOtherWallet = tokenContract.connect(walletTo);
                 await expect(tokenContractFromOtherWallet.transfer(wallet.address, 100)).to.be.revertedWith('Sender has insufficient tokens to transfer');
@@ -106,13 +107,13 @@ describe('2. Token contract behaviour', async () => {
         });
     });
 
-    describe('2.3. TransferFrom functionallity', async () => {
-        describe('Successfully transferFrom() transaction.', async () => {
+    describe('transferFrom()', async () => {
+        describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
             });
 
-            it('Transfer of tokens by allowed wallet on "_from" behalf', async () => {
+            it('Should transfer tokens on "_from" behalf', async () => {
                 await tokenContract.approve(allowedWallet.address, 100);
                 const tokenContractAllowedWallet = tokenContract.connect(allowedWallet);
                 const amountToTransfer = 10;
@@ -123,7 +124,7 @@ describe('2. Token contract behaviour', async () => {
                 );
             });
 
-            it('Allowance is substracted', async () => {
+            it('Should substract "msg.signer" allowed token amount after transfer', async () => {
                 const approveValue = 100;
                 const amountToTransfer = 10;
 
@@ -137,7 +138,7 @@ describe('2. Token contract behaviour', async () => {
                 expect(allowance).to.equal(approveValue - amountToTransfer);
             });
 
-            it('Transfer event is emitted successfully', async () => {
+            it('Should emit Transfer event with proper parameters', async () => {
                 await tokenContract.approve(allowedWallet.address, 100);
                 const tokenContractAllowedWallet = tokenContract.connect(allowedWallet);
                 const amountToTransfer = 10;
@@ -148,25 +149,25 @@ describe('2. Token contract behaviour', async () => {
             });
         });
 
-        describe('Reverted transaction transferFrom()', async () => {
+        describe('Reverted transactions', async () => {
             beforeEach(async () => {
                 tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
             });
 
-            it('"_from" cannot be zero address', async () => {
+            it('Should revert transaction since "_from" cannot be zero address', async () => {
                 await expect(tokenContract.transferFrom(ZERO_ADDRESS, wallet.address, 100)).to.be.revertedWith('_from cannot be adress(0)');
             });
-            it('"_to" cannot be zero address', async () => {
+            it('Should revert transaction since "_to" cannot be zero address', async () => {
                 await expect(tokenContract.transferFrom(wallet.address, ZERO_ADDRESS, 100)).to.be.revertedWith('_to cannot be adress(0)');
             });
-            it('"Msg.sender" has insufficient amount allowed to transfer from "_from" behalf', async () => {
+            it('Should revert transaction since "msg.sender" has insufficient amount allowed to transfer from "_from" behalf', async () => {
                 const tokenContractAllowedWallet = tokenContract.connect(allowedWallet);
                 // Assume that allowedWallet has 0 tokens approved to spend on wallet behalf
                 await expect(tokenContractAllowedWallet.transferFrom(wallet.address, walletTo.address, 100)).to.be.revertedWith(
                     "Tx signer is not allowed to transfer the desired amount on _from's behalf"
                 );
             });
-            it('"Msg.sender" has insufficient amount allowed to transfer from "_from" behalf', async () => {
+            it('Should revert transaction since "msg.sender" has insufficient amount allowed to transfer from "_from" behalf', async () => {
                 // 1. wallet allow allowedWallet to spend 100 tokens
                 await tokenContract.approve(allowedWallet.address, 100);
 
@@ -178,7 +179,7 @@ describe('2. Token contract behaviour', async () => {
                     "Tx signer is not allowed to transfer the desired amount on _from's behalf"
                 );
             });
-            it('"_from" address has insufficient balance', async () => {
+            it('Should revert transaction since "_from" address has insufficient balance', async () => {
                 // 1. wallet allow allowedWallet to spend ALL tokens
                 await tokenContract.approve(allowedWallet.address, INITIAL_AMOUNT);
 
@@ -193,52 +194,64 @@ describe('2. Token contract behaviour', async () => {
         });
     });
 
-    describe('2.4. Approve amount to transfer', async () => {
+    describe('approve()', async () => {
         beforeEach(async () => {
             tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
         });
 
-        it('"spender" cannot be zero address', async () => {
-            await expect(tokenContract.approve(ZERO_ADDRESS, 100)).to.be.revertedWith('_spender cannot be adress(0)');
+        describe('Ok scenarios', async () => {
+            it('Should assign requested amount to "msg.signer" allowed balance', async () => {
+                await tokenContract.approve(allowedWallet.address, 100);
+                const allowance = await tokenContract.allowance(wallet.address, allowedWallet.address);
+                await expect(allowance).to.be.equal(100);
+            });
+            it('Should emit Approve event with proper parameters', async () => {
+                const allowedAmount = 100;
+                await expect(tokenContract.approve(allowedWallet.address, allowedAmount))
+                    .to.emit(tokenContract, 'Approval')
+                    .withArgs(wallet.address, allowedWallet.address, allowedAmount);
+            });
         });
-
-        it('Approve operation was successfully done', async () => {
-            await tokenContract.approve(allowedWallet.address, 100);
-            const allowance = await tokenContract.allowance(wallet.address, allowedWallet.address);
-            await expect(allowance).to.be.equal(100);
-        });
-
-        it('Approve event is emitted successfully', async () => {
-            const allowedAmount = 100;
-            await expect(tokenContract.approve(allowedWallet.address, allowedAmount))
-                .to.emit(tokenContract, 'Approval')
-                .withArgs(wallet.address, allowedWallet.address, allowedAmount);
+        describe('Reverted transactions', async () => {
+            it('Should revert transaction since "spender" cannot be zero address', async () => {
+                await expect(tokenContract.approve(ZERO_ADDRESS, 100)).to.be.revertedWith('_spender cannot be adress(0)');
+            });
         });
     });
 
-    describe('2.5. Balance and allowance', async () => {
+    describe('balanceOf()', async () => {
         beforeEach(async () => {
             tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
         });
 
-        it('Balance of zero address is zero', async () => {
-            expect(await tokenContract.balanceOf(ZERO_ADDRESS)).to.be.equal(0);
+        describe('Ok scenarios', async () => {
+            it('Balance of zero address is zero', async () => {
+                expect(await tokenContract.balanceOf(ZERO_ADDRESS)).to.be.equal(0);
+            });
+
+            it('Balance of address without tokens is zero', async () => {
+                expect(await tokenContract.balanceOf(allowedWallet.address)).to.be.equal(0);
+            });
+        });
+    });
+
+    describe('allowance()', async () => {
+        beforeEach(async () => {
+            tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
         });
 
-        it('Balance of address without tokens is zero', async () => {
-            expect(await tokenContract.balanceOf(allowedWallet.address)).to.be.equal(0);
-        });
+        describe('Ok scenarios', async () => {
+            it('Allowance of spender zero address is zero', async () => {
+                expect(await tokenContract.allowance(wallet.address, ZERO_ADDRESS)).to.be.equal(0);
+            });
 
-        it('Allowance of spender zero address is zero', async () => {
-            expect(await tokenContract.allowance(wallet.address, ZERO_ADDRESS)).to.be.equal(0);
-        });
+            it('Allowance of owner zero address is zero', async () => {
+                expect(await tokenContract.allowance(ZERO_ADDRESS, wallet.address)).to.be.equal(0);
+            });
 
-        it('Allowance of owner zero address is zero', async () => {
-            expect(await tokenContract.allowance(ZERO_ADDRESS, wallet.address)).to.be.equal(0);
-        });
-
-        it('Allowance of owner without tokens is zero', async () => {
-            expect(await tokenContract.allowance(allowedWallet.address, wallet.address)).to.be.equal(0);
+            it('Allowance of owner without tokens is zero', async () => {
+                expect(await tokenContract.allowance(allowedWallet.address, wallet.address)).to.be.equal(0);
+            });
         });
     });
 });
