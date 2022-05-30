@@ -249,4 +249,38 @@ describe('TokenContract tests', async () => {
             });
         });
     });
+
+    describe('burn()', async () => {
+        describe('Ok scenarios', async () => {
+            beforeEach(async () => {
+                tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+            });
+
+            it('Should burn tokens on "sender" behalf', async () => {
+                //Not implemented test
+            });
+        });
+
+        describe('Reverted transactions', async () => {
+            beforeEach(async () => {
+                tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+            });
+
+            it('Should revert transaction since sender address is Vault contract', async () => {
+                //Not implemented test
+            });
+
+            it('Should revert transaction since amount is less than zero', async () => {
+                //Not implemented test
+            });
+
+            it('Should revert transaction since sender address has insufficient balance', async () => {
+                //Not implemented test
+            });
+
+            it('Should revert transaction since Vault contract has insufficient ethers', async () => {
+                //Not implemented test
+            });
+        });
+    });
 });
