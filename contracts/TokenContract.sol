@@ -4,10 +4,12 @@ pragma solidity 0.8.9;
 import 'hardhat/console.sol';
 
 contract TokenContract {
-    string constant _name = 'Niery token papa';
-    string constant _symbol = 'NTP';
-    uint8 constant _decimals = 18;
-    uint256 public _totalSupply; //puede ser external pero hay que ver como se llama a una propiedad o metodo extenal desde otro contrato.
+    string constant public name = 'Niery Token Papa';
+    string constant public symbol = 'NTP';
+    uint8 constant public decimals = 18;
+    
+    // It can be 'external' instead of 'public' but we have to check how to call an external method from another contract
+    uint256 public totalSupply; 
 
     mapping(address => uint256) public _balances;
     mapping(address => mapping(address => uint256)) public _allowed;
@@ -17,10 +19,9 @@ contract TokenContract {
 
     constructor(uint256 _initialAmount) {
         require(_initialAmount > 0, 'Initial amount must be greater than zero');
-        _totalSupply = _initialAmount;
-        console.log('TokenContract hold the initial supply amount for now');
+        totalSupply = _initialAmount;
         _balances[address(msg.sender)] = _initialAmount;
-        emit Transfer(address(0x0), address(this), _initialAmount);
+        emit Transfer(address(0x0), address(msg.sender), _initialAmount);
     }
 
     function balanceOf(address _owner) external view returns (uint256) {
@@ -60,7 +61,7 @@ contract TokenContract {
     ) external returns (bool) {
         require(_from != address(0), '_from cannot be adress(0)');
         require(_to != address(0), '_to cannot be adress(0)');
-        require(_value <= _allowed[_from][msg.sender]); // el que firma la transaccion tiene que estar autorizado a gastar toens de _from
+        require(_value <= _allowed[_from][msg.sender], "Tx signer is not allowed to transfer the desired amount on _from's behalf"); // el que firma la transaccion tiene que estar autorizado a gastar toens de _from
         require(_balances[_from] >= _value, '_from has insufficient tokens to transfer');
 
         _balances[_from] -= _value;
@@ -79,7 +80,7 @@ contract TokenContract {
      * @return true if the amount was allowed correctly
      */
     function approve(address _spender, uint256 _value) external returns (bool) {
-        require(_spender != address(0), 'Spender cannot be adress(0)');
+        require(_spender != address(0), '_spender cannot be adress(0)');
         _allowed[msg.sender][_spender] = 0; // lo dice el standard ERC-20
         _allowed[msg.sender][_spender] = _value;
         emit Approval(msg.sender, _spender, _allowed[msg.sender][_spender]);
