@@ -42,4 +42,11 @@ contract Vault {
         administratorsCount -= 1;
         delete administrators[_admin];
     }
+
+    function sendToBurner(uint256 amount, address _burnerAddress) external isValidAddress(_burnerAddress) {
+        uint256 halfAmount = _amount / 2;
+        //payable(_burnerAddress).transfer(halfAmount * buyPrice);
+
+        //Que la transacción falle si no hay ethers.
+    }
 }
