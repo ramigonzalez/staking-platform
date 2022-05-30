@@ -7,7 +7,12 @@ const TokenContract_ABI = require('../artifacts/contracts/TokenContract.sol/Toke
 
 use(solidity);
 
-describe('TokenContract tests', async () => {
+describe('TokenContract test suite', async () => {
+    before(() => {
+        console.log('------------------------------------------------------------------------------------');
+        console.log('------------------------', 'TokenContract', 'Contract Test Start', '-------------------------');
+        console.log('------------------------------------------------------------------------------------');
+    });
     // Constants
     const TOKEN_NAME = 'Niery Token Papa';
     const TOKEN_SYMBOL = 'NTP';
