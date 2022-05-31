@@ -5,6 +5,13 @@ import 'hardhat/console.sol';
 
 contract Vault {
     uint256 private administratorsCount;
+
+    /**
+     * Can be changed to [external] to optimize GAS USED
+     */
+    uint256 public sellPrice;
+    uint256 public buyPrice;
+
     mapping(address => bool) private administrators;
 
     /**
@@ -70,6 +77,19 @@ contract Vault {
         delete administrators[_admin];
     }
 
+    function setSellPrice(uint256 _newSellPrice) external {
+        require(_newSellPrice > 0, 'Sell price must be greater than 0');
+        require(_newSellPrice > buyPrice, 'Sell price must be greater than buy price');
+        sellPrice = _newSellPrice;
+    }
+
+    function setBuyPrice(uint256 _newBuyPrice) external {
+        require(_newBuyPrice > 0, 'Buy price must be greater than 0');
+        require(sellPrice > 0, 'Sell price must be set first');
+        require(_newBuyPrice < sellPrice, 'Buy price must be lower than sell price');
+        buyPrice = _newBuyPrice;
+    }
+
     function setMaxPercentage(uint8 _maxPercentage) external onlyAdmin {
         require(_maxPercentage <= 50, 'Withdraw percentage must be lower or equals than 50%');
         pecentageToWithdraw = _maxPercentage;
@@ -90,7 +110,7 @@ contract Vault {
     function approveWithdraw() external onlyAdmin {
         require(_requestWithdrawDetails.initialized == true, 'There is no pending withdraw request for approve');
         require(msg.sender != _requestWithdrawDetails.requestAddress, 'Approval administrator must be different from admin who requested it');
-      
+
         maxWithdraw += _requestWithdrawDetails.amountPerAdmin;
 
         this.clearRequestWithdrawDetails();
@@ -99,13 +119,13 @@ contract Vault {
     function rejectWithdraw() external onlyAdmin {
         require(_requestWithdrawDetails.initialized == true, 'There is no pending withdraw request for reject');
         require(msg.sender != _requestWithdrawDetails.requestAddress, 'Rejector administrator must be different from admin who requested it');
-        
+
         this.clearRequestWithdrawDetails();
     }
 
     /**
-     * @dev Reset struct informaton. 
-     * THIS WONT NEVER RELEASE MEMORY SLOT 
+     * @dev Reset struct informaton.
+     * THIS WONT NEVER RELEASE MEMORY SLOT
      */
     function clearRequestWithdrawDetails() public {
         _requestWithdrawDetails.initialized = false;
@@ -115,7 +135,7 @@ contract Vault {
 
     /**
      * @dev The withdraw is the difference between (maxWithdraw) and (withdrawals[msg.sender]).
-     * Amount already withdrawn is hold in withdrawals[] array. 
+     * Amount already withdrawn is hold in withdrawals[] array.
      * This structure is initialized whenever an admin is added with (maxWithdraw) value.
      */
     function withdraw() external onlyAdmin {
