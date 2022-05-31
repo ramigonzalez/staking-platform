@@ -51,16 +51,16 @@ contract Vault {
         delete administrators[_admin];
     }
 
-    function setSellPrice(uint256 _sellPrice) external {
-        require(_sellPrice > 0, 'Sell price must be greater than 0');
-        require(_sellPrice > buyPrice, 'Sell price must be greater than buy price');
-        sellPrice = _sellPrice;
+    function setSellPrice(uint256 _newSellPrice) external {
+        require(_newSellPrice > 0, 'Sell price must be greater than 0');
+        require(_newSellPrice > buyPrice, 'Sell price must be greater than buy price');
+        sellPrice = _newSellPrice;
     }
 
-    function setBuyPrice(uint256 _buyPrice) external {
-        require(_buyPrice > 0, 'Buy price must be greater than 0');
+    function setBuyPrice(uint256 _newBuyPrice) external {
+        require(_newBuyPrice > 0, 'Buy price must be greater than 0');
         require(sellPrice > 0, 'Sell price must be set first');
-        require(_buyPrice < sellPrice, 'Buy price must be lower than sell price');
-        buyPrice = _buyPrice;
+        require(_newBuyPrice < sellPrice, 'Buy price must be lower than sell price');
+        buyPrice = _newBuyPrice;
     }
 }
