@@ -23,7 +23,7 @@ module.exports = {
             chainId: 31337,
             gasPrice: 'auto',
             gas: 'auto',
-            value: 9999,
+            value: 10000,
         },
     },
 };
