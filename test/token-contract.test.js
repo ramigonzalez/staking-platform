@@ -1,13 +1,19 @@
 const { expect, use } = require('chai');
 const { waffle } = require('hardhat');
 const { deployContract, provider, solidity } = waffle;
-const { ZERO_ADDRESS } = require('./constants');
-
-const TokenContract_ABI = require('../artifacts/contracts/TokenContract.sol/TokenContract.json');
+const { ZERO_ADDRESS, contractABI } = require('./utils');
 
 use(solidity);
 
-describe('TokenContract tests', async () => {
+const contractName = 'TokenContract';
+const TOKEN_CONTRACT_ABI = contractABI(contractName);
+
+describe(contractName, async () => {
+    before(() => {
+        console.log('------------------------------------------------------------------------------------');
+        console.log('------------------------', contractName, 'Contract Test Start', '-------------------------');
+        console.log('------------------------------------------------------------------------------------');
+    });
     // Constants
     const TOKEN_NAME = 'Niery Token Papa';
     const TOKEN_SYMBOL = 'NTP';
@@ -21,7 +27,7 @@ describe('TokenContract tests', async () => {
     describe('Deployment', async () => {
         // Before execute the test suit will deploy the contract once.
         before(async () => {
-            tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
         });
 
         it(`Token name should be: "${TOKEN_NAME}"`, async () => {
@@ -47,12 +53,12 @@ describe('TokenContract tests', async () => {
 
     describe('constructor()', async () => {
         beforeEach(async () => {
-            tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
         });
 
         it('Should revert with initial amount less than zero', async () => {
             const initialAmount = 0;
-            await expect(deployContract(wallet, TokenContract_ABI, [initialAmount])).to.be.revertedWith('Initial amount must be greater than zero');
+            await expect(deployContract(wallet, TOKEN_CONTRACT_ABI, [initialAmount])).to.be.revertedWith('Initial amount must be greater than zero');
         });
 
         it('Should assign initial amount to the transation signer', async () => {
@@ -69,7 +75,7 @@ describe('TokenContract tests', async () => {
     describe('transfer()', async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
-                tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
             });
 
             it('Should transfer requested amount and modify both balances', async () => {
@@ -87,7 +93,7 @@ describe('TokenContract tests', async () => {
 
         describe('Reverted transactions', async () => {
             beforeEach(async () => {
-                tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
             });
 
             it('Should revert transactions since "_to" is ZERO_ADDRESS', async () => {
@@ -105,7 +111,7 @@ describe('TokenContract tests', async () => {
     describe('transferFrom()', async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
-                tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
             });
 
             it('Should transfer tokens on "_from" behalf', async () => {
@@ -146,7 +152,7 @@ describe('TokenContract tests', async () => {
 
         describe('Reverted transactions', async () => {
             beforeEach(async () => {
-                tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
             });
 
             it('Should revert transaction since "_from" cannot be zero address', async () => {
@@ -191,7 +197,7 @@ describe('TokenContract tests', async () => {
 
     describe('approve()', async () => {
         beforeEach(async () => {
-            tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
         });
 
         describe('Ok scenarios', async () => {
@@ -216,7 +222,7 @@ describe('TokenContract tests', async () => {
 
     describe('balanceOf()', async () => {
         beforeEach(async () => {
-            tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
         });
 
         describe('Ok scenarios', async () => {
@@ -232,7 +238,7 @@ describe('TokenContract tests', async () => {
 
     describe('allowance()', async () => {
         beforeEach(async () => {
-            tokenContract = await deployContract(wallet, TokenContract_ABI, [INITIAL_AMOUNT]);
+            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
         });
 
         describe('Ok scenarios', async () => {
