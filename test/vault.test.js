@@ -10,7 +10,7 @@ const contractName = 'Vault';
 const VAULT_ABI = contractABI(contractName);
 
 // Contract instance variable
-let signer, account1, account2, account3, account4, vaultContract;
+let signer, account1, account2, account3, account4, accountNotAdmin, vaultContract;
 
 describe(contractName, () => {
     before(async () => {
@@ -19,7 +19,7 @@ describe(contractName, () => {
         console.log('------------------------------------------------------------------------------------');
 
         // Get signers
-        [signer, account1, account2, account3, account4] = provider.getWallets();
+        [signer, account1, account2, account3, account4, accountNotAdmin] = provider.getWallets();
 
         // Deploy contract
         vaultContract = await deployContract(signer, VAULT_ABI);
@@ -98,6 +98,10 @@ describe(contractName, () => {
                 await expect(vaultContract.setSellPrice(0)).to.be.revertedWith('Sell price must be greater than 0');
             });
 
+            it('Should revert sellPrice() transaction since msg.sender is not an admin', async () => {
+                await expect(vaultContract.connect(accountNotAdmin).setSellPrice(100)).to.be.revertedWith('User must be administrator to perform this operation');
+            });
+
             it('Should revert sellPrice() transaction sell price amount is lower than buy price', async () => {
                 await vaultContract.setSellPrice(100);
                 await vaultContract.setBuyPrice(10);
@@ -132,6 +136,10 @@ describe(contractName, () => {
 
             it('Should revert buyPrice() transaction since amount is zero', async () => {
                 await expect(vaultContract.setBuyPrice(0)).to.be.revertedWith('Sell price must be greater than 0');
+            });
+
+            it('Should revert buyPrice() transaction since msg.sender is not an admin', async () => {
+                await expect(vaultContract.connect(accountNotAdmin).setSellPrice(100)).to.be.revertedWith('User must be administrator to perform this operation');
             });
 
             it('Should revert buyPrice() transaction since sell price is not set', async () => {
@@ -170,6 +178,10 @@ describe(contractName, () => {
         describe('Revert transaction', async () => {
             beforeEach(async () => {
                 vaultContract = await deployContract(signer, VAULT_ABI);
+            });
+
+            it('Should revert setMaxPercentage() transaction since msg.sender is not an admin', async () => {
+                await expect(vaultContract.connect(accountNotAdmin).setMaxPercentage(50)).to.be.revertedWith('User must be administrator to perform this operation');
             });
 
             it('Should revert transaction since percentage is greater than 50', async () => {
@@ -230,6 +242,10 @@ describe(contractName, () => {
         });
 
         describe('Revert transaction', async () => {
+            it('Should revert requestWithdraw() transaction since msg.sender is not an admin', async () => {
+                await expect(vaultContract.connect(accountNotAdmin).requestWithdraw(10)).to.be.revertedWith('User must be administrator to perform this operation');
+            });
+
             it('Should revert transaction since already exists a request for withdraw', async () => {
                 const amountToWithdraw = 10;
                 await vaultContractFromEthers.addAdmin(account2.address);
@@ -311,6 +327,10 @@ describe(contractName, () => {
         });
 
         describe('Revert transaction', async () => {
+            it('Should revert approveWithdraw() transaction since msg.sender is not an admin', async () => {
+                await expect(vaultContract.connect(accountNotAdmin).approveWithdraw()).to.be.revertedWith('User must be administrator to perform this operation');
+            });
+
             it('Should revert transaction since there is no pending withdraw request', async () => {
                 await expect(vaultContract.approveWithdraw()).to.be.revertedWith('There is no pending withdraw request for approve');
             });
@@ -375,6 +395,10 @@ describe(contractName, () => {
         });
 
         describe('Revert transaction', async () => {
+            it('Should revert rejectWithdraw() transaction since msg.sender is not an admin', async () => {
+                await expect(vaultContract.connect(accountNotAdmin).rejectWithdraw()).to.be.revertedWith('User must be administrator to perform this operation');
+            });
+
             it('Should revert transaction since there is no pending withdraw request', async () => {
                 await expect(vaultContract.rejectWithdraw()).to.be.revertedWith('There is no pending withdraw request for reject');
             });
@@ -539,6 +563,12 @@ describe(contractName, () => {
                 expect(withdrawnAmount_account_4_after_two_withdraws).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('2.5')));
             });
         });
+
+        describe('Revert transactions', async () => {
+            it('Should revert withdraw() transaction since msg.sender is not an admin', async () => {
+                await expect(vaultContract.connect(accountNotAdmin).withdraw()).to.be.revertedWith('User must be administrator to perform this operation');
+            });
+        });
     });
 
     describe('withdrawnAmount()', async () => {
@@ -564,6 +594,10 @@ describe(contractName, () => {
             await vaultContract.connect(account1).withdraw();
             const withdrawnAmount = ethers.utils.formatEther(await vaultContract.withdrawnAmount());
             expect(withdrawnAmount).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('5')));
+        });
+
+        it('Should revert withdrawnAmount() transaction since msg.sender is not an admin', async () => {
+            await expect(vaultContract.connect(accountNotAdmin).withdrawnAmount()).to.be.revertedWith('User must be administrator to perform this operation');
         });
     });
 
