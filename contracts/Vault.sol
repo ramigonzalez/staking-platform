@@ -113,6 +113,8 @@ contract Vault {
      * 4. The contract ETH balance must be greater or equals than the amount requested.
      */
     function requestWithdraw(uint256 _amount) external onlyAdmin {
+        // console.log('_amount', _amount);
+
         require(_requestWithdrawDetails.initialized == false, 'Already exists a pending withdraw request');
         require(administratorsCount >= 2, 'Cannot initiate a request withdraw with less than 2 administrators');
 
@@ -123,7 +125,7 @@ contract Vault {
         // console.log('_contractBalance', _contractBalance);
 
         // console.log('percentageToWithdraw', percentageToWithdraw, '%');
-        require(_amountToWithdraw <= percentage(_contractBalance, percentageToWithdraw), 'Amount exceeds maximum percentage');
+        require(checkMaximumAmountToWithdraw(_amountToWithdraw), 'Amount exceeds maximum percentage');
 
         require(_contractBalance >= _amountToWithdraw, 'There are insufficient funds to withdraw');
 
@@ -133,6 +135,36 @@ contract Vault {
         _requestWithdrawDetails.initialized = true;
         _requestWithdrawDetails.amountPerAdmin = _amountPerAdmin;
         _requestWithdrawDetails.requestAddress = msg.sender;
+    }
+
+    /**
+     * @dev this method validates if the amount requested to withdraw is less or equals than
+     * the contract balance * maximumPercentage allowed.
+     *
+     * Example:
+     * - contract balance: 100 ETH
+     * - maximum percentage: 10%
+     * - administratorsCounts: 2
+     * @param _requestedAmount cannot be greater than 10 ETH (maxWithdraw [5] * administratorsCounts [2])
+     *
+     * note: if administrators are added/removed, the algorithm will be restrictive in terms of allowance.
+     * This means that the maximum amount to withdraw will be favorable to the contract:
+     *
+     * 1. requestWithdraw(10) => maxAmountToWithdraw = 10 ETH.
+     * 2. apporveWithdraw()
+     * 3. addAdministrator(admin_1) => administratorsCounts: 3
+     * 4. requestWithdraw(9) => maxAmountToWithdraw = 8.5 ETH
+     *      => (contractBalance [100] - (maxWithdraw [5] * administratorsCounts [3])) * 10% = 8.5 ETH
+     */
+    function checkMaximumAmountToWithdraw(uint256 _requestedAmount) public view returns (bool) {
+        uint256 _allowedBalance = address(this).balance - (maxWithdraw * administratorsCount);
+        // console.log('_allowedBalance', _allowedBalance);
+
+        uint256 _maximumAmountToWithdraw = (_allowedBalance * percentageToWithdraw) / 100;
+
+        // console.log('_maximumAmountToWithdraw', _maximumAmountToWithdraw);
+
+        return _requestedAmount <= _maximumAmountToWithdraw;
     }
 
     function approveWithdraw() external onlyAdmin {
@@ -156,7 +188,7 @@ contract Vault {
      * @dev Reset struct informaton.
      * THIS WONT NEVER RELEASE MEMORY SLOT
      */
-    function clearRequestWithdrawDetails() public {
+    function clearRequestWithdrawDetails() external {
         _requestWithdrawDetails.initialized = false;
         _requestWithdrawDetails.amountPerAdmin = 0;
         _requestWithdrawDetails.requestAddress = address(0);
@@ -170,13 +202,14 @@ contract Vault {
     function withdraw() external onlyAdmin {
         uint256 withdrawAmount = maxWithdraw - withdrawals[msg.sender];
         payable(msg.sender).transfer(withdrawAmount);
+        withdrawals[msg.sender] += withdrawAmount;
+    }
+
+    function withdrawnAmount() external view onlyAdmin returns (uint256) {
+        return withdrawals[msg.sender];
     }
 
     function toDecimals(uint256 _number) public pure returns (uint256) {
         return _number * 10**decimal;
-    }
-
-    function percentage(uint256 _number, uint256 _percentage) public pure returns (uint256) {
-        return (_number * _percentage) / 100;
     }
 }
