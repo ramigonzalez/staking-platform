@@ -1,4 +1,5 @@
 const { expect, use } = require('chai');
+const { waffle, ethers } = require('hardhat');
 const { deployContract, provider, solidity } = waffle;
 const { ZERO_ADDRESS, contractABI } = require('./utils');
 
@@ -145,6 +146,174 @@ describe(contractName, () => {
             it('Should revert buyPrice() transaction sell price amount is equal than sell price', async () => {
                 await vaultContract.setSellPrice(100);
                 await expect(vaultContract.setBuyPrice(100)).to.be.revertedWith('Buy price must be lower than sell price');
+            });
+        });
+    });
+
+    describe('setMaxPercentage()', async () => {
+        describe('Ok scenarios', async () => {
+            beforeEach(async () => {
+                vaultContract = await deployContract(signer, VAULT_ABI);
+            });
+
+            it('Should set 1% as percentage correctly', async () => {
+                await vaultContract.setMaxPercentage(1);
+                expect(await vaultContract.percentageToWithdraw()).to.be.equal(1);
+            });
+
+            it('Should set 50% as percentage correctly', async () => {
+                await vaultContract.setMaxPercentage(50);
+                expect(await vaultContract.percentageToWithdraw()).to.be.equal(50);
+            });
+        });
+
+        describe('Revert transaction', async () => {
+            beforeEach(async () => {
+                vaultContract = await deployContract(signer, VAULT_ABI);
+            });
+
+            it('Should revert transaction since percentage is greater than 50', async () => {
+                await expect(vaultContract.setMaxPercentage(51)).to.be.revertedWith('Withdraw percentage must be lower or equals than 50%');
+            });
+
+            it('Should revert transaction since percentage is 0', async () => {
+                await expect(vaultContract.setMaxPercentage(0)).to.be.revertedWith('Withdraw percentage must be greater than 0%');
+            });
+        });
+    });
+
+    describe('requestWithdraw()', async () => {
+        let vaultContractFromEthers, accountSigner;
+
+        beforeEach(async () => {
+            // Get signer
+            [accountSigner] = await ethers.getSigners();
+
+            // Get Contracts to deploy
+            const contractPath = 'contracts/' + contractName + '.sol:' + contractName;
+            const contractFactory = await ethers.getContractFactory(contractPath, accountSigner);
+
+            vaultContractFromEthers = await contractFactory.deploy({ value: ethers.utils.parseEther('100') });
+
+            await vaultContractFromEthers.deployed();
+        });
+
+        describe('Ok scenarios', async () => {
+            it('Should complete the withdraw request', async () => {
+                const amountToWithdraw = 10;
+
+                // Add a second administrator
+                await vaultContractFromEthers.addAdmin(account2.address);
+
+                await vaultContractFromEthers.requestWithdraw(amountToWithdraw);
+
+                const adminCount = await vaultContractFromEthers.administratorsCount();
+                const requestWithdraw = await vaultContractFromEthers._requestWithdrawDetails();
+
+                const expectedAmountPerAdmin = amountToWithdraw / adminCount;
+
+                expect(requestWithdraw.initialized).to.be.true;
+                expect(requestWithdraw.amountPerAdmin).to.be.equal(ethers.utils.parseEther(expectedAmountPerAdmin.toString()));
+                expect(requestWithdraw.requestAddress).to.be.equal(signer.address);
+            });
+        });
+
+        describe('Revert transaction', async () => {
+            it('Should revert transaction since already exists a request for withdraw', async () => {
+                const amountToWithdraw = 10;
+                await vaultContractFromEthers.addAdmin(account2.address);
+                await vaultContractFromEthers.requestWithdraw(amountToWithdraw);
+                await expect(vaultContractFromEthers.requestWithdraw(amountToWithdraw)).to.be.revertedWith('Already exists a pending withdraw request');
+            });
+
+            it('Should revert transaction since there is only one administrator in the contract list', async () => {
+                const amountToWithdraw = 10;
+                await expect(vaultContractFromEthers.requestWithdraw(amountToWithdraw)).to.be.revertedWith('Cannot initiate a request withdraw with less than 2 administrators');
+            });
+
+            it('Should revert transaction since the amount requested exeeds maximum percentage', async () => {
+                const percentage = await vaultContractFromEthers.percentageToWithdraw();
+                expect(percentage).to.be.equal(10);
+
+                const contractEtherBalance = await ethers.utils.formatEther(await ethers.provider.getBalance(vaultContractFromEthers.address));
+                const expectedETHBalance = await ethers.utils.formatEther(ethers.utils.parseEther('100'));
+
+                expect(contractEtherBalance).to.be.equal(expectedETHBalance);
+
+                // Add a second administrator
+                await vaultContractFromEthers.addAdmin(account2.address);
+
+                const exeededAmountToWithdraw = 11;
+                await expect(vaultContractFromEthers.requestWithdraw(exeededAmountToWithdraw)).to.be.revertedWith('Amount exceeds maximum percentage');
+            });
+
+            // Deploy ccontract without ETH
+            beforeEach(async () => {
+                vaultContract = await deployContract(signer, VAULT_ABI);
+            });
+            it('Should revert transaction since the contract has insufficients balance', async () => {
+                const amountToWithdraw = 10;
+                await expect(vaultContract.requestWithdraw(amountToWithdraw)).to.be.revertedWith('There are insufficient funds to withdraw');
+            });
+        });
+    });
+
+    describe('approveWithdraw()', async () => {
+        beforeEach(async () => {
+            // Get Contracts to deploy
+            const contractPath = 'contracts/' + contractName + '.sol:' + contractName;
+            const contractFactory = await ethers.getContractFactory(contractPath, account1);
+
+            vaultContract = await contractFactory.deploy({ value: ethers.utils.parseEther('100') });
+
+            await vaultContract.deployed();
+        });
+
+        describe('Ok scenarios', async () => {
+            it('Should approve withdraw request correctly', async () => {
+                // Add a second administrator
+                await vaultContract.addAdmin(account2.address);
+
+                // Call the requestWithdraw with account 1
+                await vaultContract.requestWithdraw(10);
+
+                // Connect the contract to account 2 and call the approveWithdraw with it
+                await vaultContract.connect(account2).approveWithdraw();
+
+                // Act
+                const maxWithdraw = await vaultContract.maxWithdraw();
+
+                const maxWithdrawETH = ethers.utils.formatEther(maxWithdraw);
+                const expectedETH = ethers.utils.formatEther(ethers.utils.parseEther('5'));
+
+                // Assert
+                expect(maxWithdrawETH).to.be.equal(expectedETH);
+            });
+        });
+
+        describe('Revert transaction', async () => {
+            it('Should revert transaction since there is no pending withdraw request', async () => {
+                await expect(vaultContract.approveWithdraw()).to.be.revertedWith('There is no pending withdraw request for approve');
+            });
+
+            it('Should revert transaction since there is only one administrator in the contract list', async () => {
+                // Add a second administrator
+                await vaultContract.addAdmin(account2.address);
+
+                // Call the requestWithdraw with account 1
+                await vaultContract.requestWithdraw(10);
+
+                await expect(vaultContract.approveWithdraw()).to.be.revertedWith('Cannot approve a withdraw with less than 2 administrators');
+            });
+
+            it('Should revert transaction since the approval withdraw admin must be different from who requested it', async () => {
+                // Add a second administrator
+                await vaultContract.addAdmin(account2.address);
+
+                // Call the requestWithdraw with account 1
+                await vaultContract.requestWithdraw(10);
+
+                await expect(vaultContract.approveWithdraw()).to.be.revertedWith('Approval administrator must be different from admin who requested it');
             });
         });
     });
