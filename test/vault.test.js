@@ -1,7 +1,7 @@
 const { expect, use } = require('chai');
 const { waffle, ethers } = require('hardhat');
 const { deployContract, provider, solidity } = waffle;
-const { ZERO_ADDRESS, contractABI } = require('./utils');
+const { ZERO_ADDRESS, contractABI, toEthers } = require('./utils');
 
 use(solidity);
 
@@ -10,7 +10,7 @@ const contractName = 'Vault';
 const VAULT_ABI = contractABI(contractName);
 
 // Contract instance variable
-let signer, account1, account2, vaultContract;
+let signer, account1, account2, account3, account4, vaultContract;
 
 describe(contractName, () => {
     before(async () => {
@@ -19,7 +19,7 @@ describe(contractName, () => {
         console.log('------------------------------------------------------------------------------------');
 
         // Get signers
-        [signer, account1, account2] = provider.getWallets();
+        [signer, account1, account2, account3, account4] = provider.getWallets();
 
         // Deploy contract
         vaultContract = await deployContract(signer, VAULT_ABI);
@@ -216,6 +216,17 @@ describe(contractName, () => {
                 expect(requestWithdraw.amountPerAdmin).to.be.equal(ethers.utils.parseEther(expectedAmountPerAdmin.toString()));
                 expect(requestWithdraw.requestAddress).to.be.equal(signer.address);
             });
+
+            it('Should allow the requested amount after addAdmin() happens decreasing the virtual contract balance', async () => {
+                await vaultContractFromEthers.addAdmin(account2.address);
+                await vaultContractFromEthers.requestWithdraw(10); // maximum amount to request is 10
+                await vaultContractFromEthers.connect(account2).approveWithdraw();
+                await vaultContractFromEthers.addAdmin(account3.address);
+                await vaultContractFromEthers.requestWithdraw(8);
+
+                const requestWithdraw = await vaultContractFromEthers._requestWithdrawDetails();
+                expect(requestWithdraw.initialized).to.be.true;
+            });
         });
 
         describe('Revert transaction', async () => {
@@ -245,6 +256,14 @@ describe(contractName, () => {
 
                 const exeededAmountToWithdraw = 11;
                 await expect(vaultContractFromEthers.requestWithdraw(exeededAmountToWithdraw)).to.be.revertedWith('Amount exceeds maximum percentage');
+            });
+
+            it('Should not allow the requested amount to exceed the maximum amount to withdraw when addAdmin() happens', async () => {
+                await vaultContractFromEthers.addAdmin(account2.address);
+                await vaultContractFromEthers.requestWithdraw(10); // maximum amount to request is 10
+                await vaultContractFromEthers.connect(account2).approveWithdraw();
+                await vaultContractFromEthers.addAdmin(account3.address);
+                await expect(vaultContractFromEthers.requestWithdraw(9)).to.be.revertedWith('Amount exceeds maximum percentage');
             });
 
             // Deploy ccontract without ETH
@@ -315,6 +334,283 @@ describe(contractName, () => {
 
                 await expect(vaultContract.approveWithdraw()).to.be.revertedWith('Approval administrator must be different from admin who requested it');
             });
+        });
+    });
+
+    describe('rejectWithdraw()', async () => {
+        beforeEach(async () => {
+            // Get Contracts to deploy
+            const contractPath = 'contracts/' + contractName + '.sol:' + contractName;
+            const contractFactory = await ethers.getContractFactory(contractPath, account1);
+
+            vaultContract = await contractFactory.deploy({ value: ethers.utils.parseEther('100') });
+
+            await vaultContract.deployed();
+        });
+
+        describe('Ok scenarios', async () => {
+            it('Should approve withdraw request correctly', async () => {
+                // Add a second administrator
+                await vaultContract.addAdmin(account2.address);
+
+                // Call the requestWithdraw with account 1
+                await vaultContract.requestWithdraw(10);
+
+                // Connect the contract to account 2 and call the rejectWithdraw with it
+                await vaultContract.connect(account2).rejectWithdraw();
+
+                // Act
+                const maxWithdraw = await vaultContract.maxWithdraw();
+                const requestWithdraw = await vaultContract._requestWithdrawDetails();
+
+                const maxWithdrawETH = ethers.utils.formatEther(maxWithdraw);
+                const expectedETH = ethers.utils.formatEther(ethers.utils.parseEther('0'));
+
+                // Assert
+                expect(maxWithdrawETH).to.be.equal(expectedETH);
+                expect(requestWithdraw.initialized).to.be.false;
+                expect(requestWithdraw.amountPerAdmin).to.be.equal(ethers.utils.parseEther('0'));
+                expect(requestWithdraw.requestAddress).to.be.equal(ZERO_ADDRESS);
+            });
+        });
+
+        describe('Revert transaction', async () => {
+            it('Should revert transaction since there is no pending withdraw request', async () => {
+                await expect(vaultContract.rejectWithdraw()).to.be.revertedWith('There is no pending withdraw request for reject');
+            });
+
+            it('Should revert transaction since the approval withdraw admin must be different from who requested it', async () => {
+                // Add a second administrator
+                await vaultContract.addAdmin(account2.address);
+
+                // Call the requestWithdraw with account 1
+                await vaultContract.requestWithdraw(10);
+
+                await expect(vaultContract.rejectWithdraw()).to.be.revertedWith('Rejector administrator must be different from admin who requested it');
+            });
+        });
+    });
+
+    describe('withdraw()', async () => {
+        beforeEach(async () => {
+            // Get Contracts to deploy
+            const contractPath = 'contracts/' + contractName + '.sol:' + contractName;
+            const contractFactory = await ethers.getContractFactory(contractPath, account4);
+
+            vaultContract = await contractFactory.deploy({ value: ethers.utils.parseEther('100') });
+
+            await vaultContract.deployed();
+        });
+
+        describe('Ok scenarios', async () => {
+            it('Should withdraw the correspondant amount assigned to the admin', async () => {
+                // Add 4 administrators
+                await vaultContract.addAdmin(account1.address);
+                await vaultContract.addAdmin(account2.address);
+                await vaultContract.addAdmin(account3.address);
+
+                // Call the requestWithdraw with account 1
+                await vaultContract.requestWithdraw(10);
+
+                // Connect the contract to account 1 and call the approveWithdraw with it
+                await vaultContract.connect(account1).approveWithdraw();
+
+                // Act
+                const maxWithdraw = await vaultContract.maxWithdraw();
+                const withdrawnAmount_before = ethers.utils.formatEther(await vaultContract.withdrawnAmount());
+
+                const maxWithdrawETH = ethers.utils.formatEther(maxWithdraw);
+                const expectedETH = ethers.utils.formatEther(ethers.utils.parseEther('2.5'));
+
+                // const account_2_before = await ethers.utils.formatEther(await ethers.provider.getBalance(account2.address));
+
+                // Pre-requisits asserts
+                expect(withdrawnAmount_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('0')));
+                expect(maxWithdrawETH).to.be.equal(expectedETH);
+                // expect(account_2_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('9999.999602665484148645')));
+
+                await vaultContract.withdraw();
+
+                // Act
+                const withdrawnAmount_after = ethers.utils.formatEther(await vaultContract.withdrawnAmount());
+
+                // Assert
+                expect(withdrawnAmount_after).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('2.5')));
+                // const account_2_after = await ethers.utils.formatEther(await ethers.provider.getBalance(account2.address));
+                // expect(account_2_after).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('10002.5')));
+            });
+
+            it('Should allow every participant to withdraw their part', async () => {
+                // Add 4 administrators
+                await vaultContract.addAdmin(account1.address);
+                await vaultContract.addAdmin(account2.address);
+                await vaultContract.addAdmin(account3.address);
+
+                // Call the requestWithdraw with account 1
+                await vaultContract.requestWithdraw(10);
+
+                // Connect the contract to account 1 and call the approveWithdraw with it
+                await vaultContract.connect(account1).approveWithdraw();
+
+                // Act
+                const maxWithdraw = await vaultContract.maxWithdraw();
+                const maxWithdrawETH = ethers.utils.formatEther(maxWithdraw);
+                const expectedETH = ethers.utils.formatEther(ethers.utils.parseEther('2.5'));
+
+                const withdrawnAmount_account_1_before = ethers.utils.formatEther(await vaultContract.connect(account1).withdrawnAmount());
+                const withdrawnAmount_account_2_before = ethers.utils.formatEther(await vaultContract.connect(account2).withdrawnAmount());
+                const withdrawnAmount_account_3_before = ethers.utils.formatEther(await vaultContract.connect(account3).withdrawnAmount());
+                const withdrawnAmount_account_4_before = ethers.utils.formatEther(await vaultContract.connect(account4).withdrawnAmount());
+
+                // Pre-requisits asserts
+                expect(maxWithdrawETH).to.be.equal(expectedETH);
+                expect(withdrawnAmount_account_1_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('0')));
+                expect(withdrawnAmount_account_2_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('0')));
+                expect(withdrawnAmount_account_3_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('0')));
+                expect(withdrawnAmount_account_4_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('0')));
+
+                // Act
+                await vaultContract.connect(account1).withdraw();
+                await vaultContract.connect(account2).withdraw();
+                await vaultContract.connect(account3).withdraw();
+                await vaultContract.connect(account4).withdraw();
+
+                const withdrawnAmount_account_1_after = ethers.utils.formatEther(await vaultContract.connect(account1).withdrawnAmount());
+                const withdrawnAmount_account_2_after = ethers.utils.formatEther(await vaultContract.connect(account2).withdrawnAmount());
+                const withdrawnAmount_account_3_after = ethers.utils.formatEther(await vaultContract.connect(account3).withdrawnAmount());
+                const withdrawnAmount_account_4_after = ethers.utils.formatEther(await vaultContract.connect(account4).withdrawnAmount());
+
+                // Assert
+                expect(withdrawnAmount_account_1_after).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('2.5')));
+                expect(withdrawnAmount_account_2_after).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('2.5')));
+                expect(withdrawnAmount_account_3_after).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('2.5')));
+                expect(withdrawnAmount_account_4_after).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('2.5')));
+            });
+
+            it('Should NOT allow an admin to withdraw more ETH than what was requested', async () => {
+                // Add 4 administrators
+                await vaultContract.addAdmin(account1.address);
+                await vaultContract.addAdmin(account2.address);
+                await vaultContract.addAdmin(account3.address);
+
+                // Call the requestWithdraw with account 1
+                await vaultContract.requestWithdraw(10);
+
+                // Connect the contract to account 1 and call the approveWithdraw with it
+                await vaultContract.connect(account1).approveWithdraw();
+
+                // Act
+                const maxWithdraw = await vaultContract.maxWithdraw();
+                const maxWithdrawETH = ethers.utils.formatEther(maxWithdraw);
+                const expectedETH = ethers.utils.formatEther(ethers.utils.parseEther('2.5'));
+
+                const withdrawnAmount_account_1_before = ethers.utils.formatEther(await vaultContract.connect(account1).withdrawnAmount());
+                const withdrawnAmount_account_2_before = ethers.utils.formatEther(await vaultContract.connect(account2).withdrawnAmount());
+                const withdrawnAmount_account_3_before = ethers.utils.formatEther(await vaultContract.connect(account3).withdrawnAmount());
+                const withdrawnAmount_account_4_before = ethers.utils.formatEther(await vaultContract.connect(account4).withdrawnAmount());
+
+                // Pre-requisits asserts
+                expect(maxWithdrawETH).to.be.equal(expectedETH);
+                expect(withdrawnAmount_account_1_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('0')));
+                expect(withdrawnAmount_account_2_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('0')));
+                expect(withdrawnAmount_account_3_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('0')));
+                expect(withdrawnAmount_account_4_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('0')));
+
+                await vaultContract.connect(account1).withdraw();
+                await vaultContract.connect(account2).withdraw();
+                await vaultContract.connect(account3).withdraw();
+                await vaultContract.connect(account4).withdraw();
+
+                const withdrawnAmount_account_1_after = ethers.utils.formatEther(await vaultContract.connect(account1).withdrawnAmount());
+                const withdrawnAmount_account_2_after = ethers.utils.formatEther(await vaultContract.connect(account2).withdrawnAmount());
+                const withdrawnAmount_account_3_after = ethers.utils.formatEther(await vaultContract.connect(account3).withdrawnAmount());
+                const withdrawnAmount_account_4_after = ethers.utils.formatEther(await vaultContract.connect(account4).withdrawnAmount());
+
+                expect(withdrawnAmount_account_1_after).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('2.5')));
+                expect(withdrawnAmount_account_2_after).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('2.5')));
+                expect(withdrawnAmount_account_3_after).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('2.5')));
+                expect(withdrawnAmount_account_4_after).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('2.5')));
+
+                // Act: try to withdraw
+                await vaultContract.connect(account4).withdraw();
+
+                // Assert
+                const withdrawnAmount_account_4_after_two_withdraws = ethers.utils.formatEther(await vaultContract.connect(account4).withdrawnAmount());
+                expect(withdrawnAmount_account_4_after_two_withdraws).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('2.5')));
+            });
+        });
+    });
+
+    describe('withdrawnAmount()', async () => {
+        beforeEach(async () => {
+            // Get Contracts to deploy
+            const contractPath = 'contracts/' + contractName + '.sol:' + contractName;
+            const contractFactory = await ethers.getContractFactory(contractPath, account1);
+
+            vaultContract = await contractFactory.deploy({ value: ethers.utils.parseEther('100') });
+
+            await vaultContract.deployed();
+        });
+
+        it('Should retrieve zero (0) withdrawals for signer account', async () => {
+            const withdrawnAmount = ethers.utils.formatEther(await vaultContract.withdrawnAmount());
+            expect(withdrawnAmount).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('0')));
+        });
+
+        it('Should retrieve 5 ETH withdrawn for signer account since exists only 2 administrators, 10% percentage and 10 ETH were requested', async () => {
+            await vaultContract.addAdmin(account2.address);
+            await vaultContract.requestWithdraw(10);
+            await vaultContract.connect(account2).approveWithdraw();
+            await vaultContract.connect(account1).withdraw();
+            const withdrawnAmount = ethers.utils.formatEther(await vaultContract.withdrawnAmount());
+            expect(withdrawnAmount).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('5')));
+        });
+    });
+
+    describe('checkMaximumAmountToWithdraw()', async () => {
+        beforeEach(async () => {
+            // Get Contracts to deploy
+            const contractPath = 'contracts/' + contractName + '.sol:' + contractName;
+            const contractFactory = await ethers.getContractFactory(contractPath, account1);
+
+            vaultContract = await contractFactory.deploy({ value: ethers.utils.parseEther('100') });
+
+            await vaultContract.deployed();
+        });
+
+        it('Should allow the requested value', async () => {
+            const percentage = await vaultContract.percentageToWithdraw();
+            expect(percentage).to.be.equal(10);
+
+            const contractEtherBalance = await ethers.utils.formatEther(await ethers.provider.getBalance(vaultContract.address));
+            expect(parseInt(contractEtherBalance)).to.be.greaterThan(parseInt(await ethers.utils.formatEther('0')));
+
+            const result = await vaultContract.checkMaximumAmountToWithdraw(ethers.utils.parseEther('10'));
+            expect(result).to.be.true;
+        });
+
+        it('Should NOT allow the requested value since the amount exeeds the amount allowed to withdraw', async () => {
+            const percentage = await vaultContract.percentageToWithdraw();
+            expect(percentage).to.be.equal(10);
+
+            const contractEtherBalance = await ethers.utils.formatEther(await ethers.provider.getBalance(vaultContract.address));
+            expect(parseInt(contractEtherBalance)).to.be.greaterThan(parseInt(await ethers.utils.formatEther('0')));
+
+            const result = await vaultContract.checkMaximumAmountToWithdraw(ethers.utils.parseEther('11'));
+            expect(result).to.be.false;
+        });
+
+        it('Should NOT allow the requested since the contract has no funds', async () => {
+            vaultContract = await deployContract(signer, VAULT_ABI);
+
+            const percentage = await vaultContract.percentageToWithdraw();
+            expect(percentage).to.be.equal(10);
+
+            const contractEtherBalance = await ethers.utils.formatEther(await ethers.provider.getBalance(vaultContract.address));
+            expect(parseInt(contractEtherBalance)).to.be.equal(parseInt(await ethers.utils.formatEther('0')));
+
+            const result = await vaultContract.checkMaximumAmountToWithdraw(ethers.utils.parseEther('5'));
+            expect(result).to.be.false;
         });
     });
 });
