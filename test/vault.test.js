@@ -459,8 +459,6 @@ describe(contractName, () => {
 
                 // Assert
                 expect(withdrawnAmount_after).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('2.5')));
-                // const account_2_after = await ethers.utils.formatEther(await ethers.provider.getBalance(account2.address));
-                // expect(account_2_after).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('10002.5')));
             });
 
             it('Should allow every participant to withdraw their part', async () => {
