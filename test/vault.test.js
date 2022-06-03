@@ -451,7 +451,6 @@ describe(contractName, () => {
                 // Pre-requisits asserts
                 expect(withdrawnAmount_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('0')));
                 expect(maxWithdrawETH).to.be.equal(expectedETH);
-                // expect(account_2_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('9999.999602665484148645')));
 
                 await vaultContract.withdraw();
 
