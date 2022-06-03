@@ -70,7 +70,7 @@ contract Vault {
         require(!this.isAdmin(_admin), 'Account is already an admin');
         administratorsCount += 1;
         administrators[_admin] = true;
-        withdrawals[_admin] = maxWithdraw; // This line does not allow an administrator to withdraw more ethers that what was expected
+        withdrawals[_admin] = maxWithdraw; // This line does not allow a new admin to make any withdraw
     }
 
     function removeAdmin(address _admin) external onlyAdmin isValidAddress(_admin) {
