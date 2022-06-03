@@ -202,8 +202,8 @@ contract Vault {
      */
     function withdraw() external onlyAdmin {
         uint256 withdrawAmount = maxWithdraw - withdrawals[msg.sender];
-        payable(msg.sender).transfer(withdrawAmount);
         withdrawals[msg.sender] += withdrawAmount;
+        payable(msg.sender).transfer(withdrawAmount);
     }
 
     function withdrawnAmount() external view onlyAdmin returns (uint256) {
