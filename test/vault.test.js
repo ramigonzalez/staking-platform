@@ -446,7 +446,6 @@ describe(contractName, () => {
                 const maxWithdrawETH = ethers.utils.formatEther(maxWithdraw);
                 const expectedETH = ethers.utils.formatEther(ethers.utils.parseEther('2.5'));
 
-                // const account_2_before = await ethers.utils.formatEther(await ethers.provider.getBalance(account2.address));
 
                 // Pre-requisits asserts
                 expect(withdrawnAmount_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('0')));
