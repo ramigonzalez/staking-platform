@@ -78,6 +78,7 @@ contract Vault {
         require(administratorsCount > 1, 'There must be at least one admin');
         administratorsCount -= 1;
         delete administrators[_admin];
+        delete withdrawals[_admin]; // To return GAS
     }
 
     function setSellPrice(uint256 _newSellPrice) external onlyAdmin {
@@ -115,7 +116,7 @@ contract Vault {
     function requestWithdraw(uint256 _amount) external onlyAdmin {
         // console.log('_amount', _amount);
 
-        require(_requestWithdrawDetails.initialized == false, 'Already exists a pending withdraw request');
+        require(!_requestWithdrawDetails.initialized, 'Already exists a pending withdraw request');
         require(administratorsCount >= 2, 'Cannot initiate a request withdraw with less than 2 administrators');
 
         uint256 _amountToWithdraw = toDecimals(_amount);
@@ -168,7 +169,7 @@ contract Vault {
     }
 
     function approveWithdraw() external onlyAdmin {
-        require(_requestWithdrawDetails.initialized == true, 'There is no pending withdraw request for approve');
+        require(_requestWithdrawDetails.initialized, 'There is no pending withdraw request for approve');
         require(administratorsCount >= 2, 'Cannot approve a withdraw with less than 2 administrators');
         require(msg.sender != _requestWithdrawDetails.requestAddress, 'Approval administrator must be different from admin who requested it');
 
@@ -178,7 +179,7 @@ contract Vault {
     }
 
     function rejectWithdraw() external onlyAdmin {
-        require(_requestWithdrawDetails.initialized == true, 'There is no pending withdraw request for reject');
+        require(_requestWithdrawDetails.initialized, 'There is no pending withdraw request for reject');
         require(msg.sender != _requestWithdrawDetails.requestAddress, 'Rejector administrator must be different from admin who requested it');
 
         this.clearRequestWithdrawDetails();
