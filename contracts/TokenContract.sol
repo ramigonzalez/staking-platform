@@ -107,7 +107,7 @@ contract TokenContract {
     function burn(uint256 _amount) external {
         require(msg.sender != vaultAddress, 'Vault contract cannot make this call');
         require(_amount > 0, '_amount must be greater than 0');
-        require(_amount < _balances[msg.sender], '_amount cannot be greater than sender balance');
+        require(_amount <= _balances[msg.sender], '_amount cannot be greater than sender balance');
         _balances[msg.sender] -= _amount;
         totalSupply -= _amount;
 
