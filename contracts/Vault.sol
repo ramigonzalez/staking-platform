@@ -64,10 +64,9 @@ contract Vault {
         buyPrice = _newBuyPrice;
     }
 
-    function sendToBurner(uint256 amount, address _burnerAddress) external isValidAddress(_burnerAddress) {
-        uint256 halfAmount = _amount / 2;
-        //payable(_burnerAddress).transfer(halfAmount * buyPrice);
-
-        //Que la transacción falle si no hay ethers.
+    function sendToBurner(uint256 _amount, address _burnerAddress) external isValidAddress(_burnerAddress) {
+        uint256 amountToTransfer = buyPrice * _amount / 2;
+        require(address(this).balance > amountToTransfer, 'Vault balance must be greater than the amount to transfer');
+        payable(_burnerAddress).transfer(amountToTransfer);
     }
 }

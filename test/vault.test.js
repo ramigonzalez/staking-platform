@@ -148,4 +148,30 @@ describe(contractName, () => {
             });
         });
     });
+
+    describe('sendToBurner()', async () => {
+        describe('Ok scenarios', async () => {
+            beforeEach(async () => {
+                vaultContract = await deployContract(signer, VAULT_ABI);
+            });
+
+            it('Should send to burner', async () => {
+                // const amount = 100;
+                // const burnerAddress = signer.address;
+                // await vaultContract.sendToBurner(amount, burnerAddress);
+            });
+        });
+        describe('Revert transaction', async () => {
+            beforeEach(async () => {
+                vaultContract = await deployContract(signer, VAULT_ABI);
+            });
+
+            it('Should revert sendToburner() transaction when amount is greater than vault balance', async () => {
+                const amount = 100;
+                const burnerAddress = signer.address;
+                await expect(vaultContract.sendToBurner(amount, burnerAddress)).to.be.revertedWith('Vault balance must be greater than the amount to transfer');
+            });
+
+        });
+    });
 });

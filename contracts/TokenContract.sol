@@ -17,11 +17,17 @@ contract TokenContract {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
+    address public vaultAddress;
+
     constructor(uint256 _initialAmount) {
         require(_initialAmount > 0, 'Initial amount must be greater than zero');
         totalSupply = _initialAmount;
         _balances[address(msg.sender)] = _initialAmount;
         emit Transfer(address(0x0), address(msg.sender), _initialAmount);
+    }
+
+    function setVaultAddress (address _vaultAddress) external {
+        vaultAddress = _vaultAddress;
     }
 
     function balanceOf(address _owner) external view returns (uint256) {
@@ -94,17 +100,20 @@ contract TokenContract {
         return _allowed[_owner][_spender];
     }
 
+    /**
+     * @dev It burns an @param _amount from the balance of the sender and sends to the burner 
+     * the 50 percent of the amount * buyPrice. 
+     */
     function burn(uint256 _amount) external {
-        //require(msg.sender != vaultAddress, 'Vault contract cannot make this call');
+        require(msg.sender != vaultAddress, 'Vault contract cannot make this call');
         require(_amount > 0, '_amount must be greater than 0');
-        require(_amount < msg.sender.balance, '_amount cannot be less than sender balance');
-        
+        require(_amount < _balances[msg.sender], '_amount cannot be greater than sender balance');
         _balances[msg.sender] -= _amount;
         totalSupply -= _amount;
 
-        bool responseOk = vaultContract.sendToBurner(_amount, msg.sender);
-       
-        //if (!responseOk) { revert(‘Something bad happened’); }
-    }
+        bytes memory methodToCall = abi.encodeWithSignature('sendToBurner(uint256,address)', _amount, msg.sender);
+        (bool _success, bytes memory _returnData) = vaultAddress.call(methodToCall);
 
+        //require(_success == true, "Call to sendToBurner() failed");
+    }
 }
