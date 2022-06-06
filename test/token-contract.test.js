@@ -69,8 +69,28 @@ describe(contractName, async () => {
         });
 
         it('Should emit Transfer event with proper parameters', async () => {
-            // TODO: implement construct event emit test
-            expect(true).to.be.true;
+            const eventName = 'Transfer';
+
+            const eventArguments = {
+                _from: ZERO_ADDRESS,
+                _to: wallet.address,
+                _value: INITIAL_AMOUNT,
+            };
+
+            const tx = await tokenContract.deployTransaction.wait();
+            const events = tx.events;
+            const event = events.filter((e) => e.event === eventName)[0];
+
+            const eventArgs = event ? event.args : [];
+
+            const [transferFrom, transferTo, transferValue] = eventArgs;
+
+            expect(event).to.be.not.null;
+            expect(eventArgs).to.be.not.empty;
+            expect(eventArgs.length).to.be.equal(3);
+            expect(transferFrom).to.be.equal(eventArguments._from);
+            expect(transferTo).to.be.equal(eventArguments._to);
+            expect(transferValue).to.be.equal(eventArguments._value);
         });
     });
 
