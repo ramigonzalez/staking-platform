@@ -114,24 +114,16 @@ contract Vault {
      * 4. The contract ETH balance must be greater or equals than the amount requested.
      */
     function requestWithdraw(uint256 _amount) external onlyAdmin {
-        // console.log('_amount', _amount);
-
         require(!_requestWithdrawDetails.initialized, 'Already exists a pending withdraw request');
         require(administratorsCount >= 2, 'Cannot initiate a request withdraw with less than 2 administrators');
 
-        uint256 _amountToWithdraw = toDecimals(_amount);
-        // console.log('_amountToWithdraw', _amountToWithdraw);
-
         uint256 _contractBalance = address(this).balance;
-        // console.log('_contractBalance', _contractBalance);
 
-        // console.log('percentageToWithdraw', percentageToWithdraw, '%');
-        require(checkMaximumAmountToWithdraw(_amountToWithdraw), 'Amount exceeds maximum percentage');
+        require(checkMaximumAmountToWithdraw(_amount), 'Amount exceeds maximum percentage');
 
-        require(_contractBalance >= _amountToWithdraw, 'There are insufficient funds to withdraw');
+        require(_contractBalance >= _amount, 'There are insufficient funds to withdraw');
 
-        uint256 _amountPerAdmin = _amountToWithdraw / administratorsCount;
-        // console.log('_amountPerAdmin', _amountPerAdmin);
+        uint256 _amountPerAdmin = _amount / administratorsCount;
 
         _requestWithdrawDetails.initialized = true;
         _requestWithdrawDetails.amountPerAdmin = _amountPerAdmin;
@@ -159,12 +151,7 @@ contract Vault {
      */
     function checkMaximumAmountToWithdraw(uint256 _requestedAmount) public view returns (bool) {
         uint256 _allowedBalance = address(this).balance - (maxWithdraw * administratorsCount);
-        // console.log('_allowedBalance', _allowedBalance);
-
         uint256 _maximumAmountToWithdraw = (_allowedBalance * percentageToWithdraw) / 100;
-
-        // console.log('_maximumAmountToWithdraw', _maximumAmountToWithdraw);
-
         return _requestedAmount <= _maximumAmountToWithdraw;
     }
 
@@ -208,9 +195,5 @@ contract Vault {
 
     function withdrawnAmount() external view onlyAdmin returns (uint256) {
         return withdrawals[msg.sender];
-    }
-
-    function toDecimals(uint256 _number) public pure returns (uint256) {
-        return _number * 10**decimal;
     }
 }

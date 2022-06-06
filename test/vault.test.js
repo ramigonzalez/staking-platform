@@ -15,7 +15,7 @@ let signer, account1, account2, account3, account4, accountNotAdmin, vaultContra
 describe(contractName, () => {
     before(async () => {
         console.log('------------------------------------------------------------------------------------');
-        console.log('----------------------------', contractName, 'Contract Test Start', '----------------------------');
+        console.log('----------------------------', contractName, 'Contract Test Start', '-----------------------------');
         console.log('------------------------------------------------------------------------------------');
 
         // Get signers
@@ -212,29 +212,30 @@ describe(contractName, () => {
 
         describe('Ok scenarios', async () => {
             it('Should complete the withdraw request', async () => {
-                const amountToWithdraw = 10;
+                const amount = 10;
+                const amountToWithdrawETH = toEthers(amount);
 
                 // Add a second administrator
                 await vaultContractFromEthers.addAdmin(account2.address);
 
-                await vaultContractFromEthers.requestWithdraw(amountToWithdraw);
+                await vaultContractFromEthers.requestWithdraw(amountToWithdrawETH);
 
                 const adminCount = await vaultContractFromEthers.administratorsCount();
                 const requestWithdraw = await vaultContractFromEthers._requestWithdrawDetails();
 
-                const expectedAmountPerAdmin = amountToWithdraw / adminCount;
+                const expectedAmountPerAdmin = toEthers(amount / adminCount);
 
                 expect(requestWithdraw.initialized).to.be.true;
-                expect(requestWithdraw.amountPerAdmin).to.be.equal(ethers.utils.parseEther(expectedAmountPerAdmin.toString()));
+                expect(requestWithdraw.amountPerAdmin).to.be.equal(expectedAmountPerAdmin);
                 expect(requestWithdraw.requestAddress).to.be.equal(signer.address);
             });
 
             it('Should allow the requested amount after addAdmin() happens decreasing the virtual contract balance', async () => {
                 await vaultContractFromEthers.addAdmin(account2.address);
-                await vaultContractFromEthers.requestWithdraw(10); // maximum amount to request is 10
+                await vaultContractFromEthers.requestWithdraw(toEthers(10)); // maximum amount to request is 10
                 await vaultContractFromEthers.connect(account2).approveWithdraw();
                 await vaultContractFromEthers.addAdmin(account3.address);
-                await vaultContractFromEthers.requestWithdraw(8);
+                await vaultContractFromEthers.requestWithdraw(toEthers(8.5));
 
                 const requestWithdraw = await vaultContractFromEthers._requestWithdrawDetails();
                 expect(requestWithdraw.initialized).to.be.true;
@@ -243,18 +244,18 @@ describe(contractName, () => {
 
         describe('Revert transaction', async () => {
             it('Should revert requestWithdraw() transaction since msg.sender is not an admin', async () => {
-                await expect(vaultContract.connect(accountNotAdmin).requestWithdraw(10)).to.be.revertedWith('User must be administrator to perform this operation');
+                await expect(vaultContract.connect(accountNotAdmin).requestWithdraw(toEthers(10))).to.be.revertedWith('User must be administrator to perform this operation');
             });
 
             it('Should revert transaction since already exists a request for withdraw', async () => {
-                const amountToWithdraw = 10;
+                const amountToWithdraw = toEthers(10);
                 await vaultContractFromEthers.addAdmin(account2.address);
                 await vaultContractFromEthers.requestWithdraw(amountToWithdraw);
                 await expect(vaultContractFromEthers.requestWithdraw(amountToWithdraw)).to.be.revertedWith('Already exists a pending withdraw request');
             });
 
             it('Should revert transaction since there is only one administrator in the contract list', async () => {
-                const amountToWithdraw = 10;
+                const amountToWithdraw = toEthers(10);
                 await expect(vaultContractFromEthers.requestWithdraw(amountToWithdraw)).to.be.revertedWith('Cannot initiate a request withdraw with less than 2 administrators');
             });
 
@@ -270,16 +271,16 @@ describe(contractName, () => {
                 // Add a second administrator
                 await vaultContractFromEthers.addAdmin(account2.address);
 
-                const exeededAmountToWithdraw = 11;
+                const exeededAmountToWithdraw = toEthers(11);
                 await expect(vaultContractFromEthers.requestWithdraw(exeededAmountToWithdraw)).to.be.revertedWith('Amount exceeds maximum percentage');
             });
 
             it('Should not allow the requested amount to exceed the maximum amount to withdraw when addAdmin() happens', async () => {
                 await vaultContractFromEthers.addAdmin(account2.address);
-                await vaultContractFromEthers.requestWithdraw(10); // maximum amount to request is 10
+                await vaultContractFromEthers.requestWithdraw(toEthers(10)); // maximum amount to request is 10
                 await vaultContractFromEthers.connect(account2).approveWithdraw();
                 await vaultContractFromEthers.addAdmin(account3.address);
-                await expect(vaultContractFromEthers.requestWithdraw(9)).to.be.revertedWith('Amount exceeds maximum percentage');
+                await expect(vaultContractFromEthers.requestWithdraw(toEthers(9))).to.be.revertedWith('Amount exceeds maximum percentage');
             });
 
             // Deploy ccontract without ETH
@@ -287,7 +288,7 @@ describe(contractName, () => {
                 vaultContract = await deployContract(signer, VAULT_ABI);
             });
             it('Should revert transaction since the contract has insufficients balance', async () => {
-                const amountToWithdraw = 10;
+                const amountToWithdraw = toEthers(10);
                 await expect(vaultContract.requestWithdraw(amountToWithdraw)).to.be.revertedWith('There are insufficient funds to withdraw');
             });
         });
@@ -310,7 +311,7 @@ describe(contractName, () => {
                 await vaultContract.addAdmin(account2.address);
 
                 // Call the requestWithdraw with account 1
-                await vaultContract.requestWithdraw(10);
+                await vaultContract.requestWithdraw(toEthers(10));
 
                 // Connect the contract to account 2 and call the approveWithdraw with it
                 await vaultContract.connect(account2).approveWithdraw();
@@ -374,7 +375,7 @@ describe(contractName, () => {
                 await vaultContract.addAdmin(account2.address);
 
                 // Call the requestWithdraw with account 1
-                await vaultContract.requestWithdraw(10);
+                await vaultContract.requestWithdraw(toEthers(10));
 
                 // Connect the contract to account 2 and call the rejectWithdraw with it
                 await vaultContract.connect(account2).rejectWithdraw();
@@ -434,7 +435,7 @@ describe(contractName, () => {
                 await vaultContract.addAdmin(account3.address);
 
                 // Call the requestWithdraw with account 1
-                await vaultContract.requestWithdraw(10);
+                await vaultContract.requestWithdraw(toEthers(10));
 
                 // Connect the contract to account 1 and call the approveWithdraw with it
                 await vaultContract.connect(account1).approveWithdraw();
@@ -445,7 +446,6 @@ describe(contractName, () => {
 
                 const maxWithdrawETH = ethers.utils.formatEther(maxWithdraw);
                 const expectedETH = ethers.utils.formatEther(ethers.utils.parseEther('2.5'));
-
 
                 // Pre-requisits asserts
                 expect(withdrawnAmount_before).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('0')));
@@ -467,7 +467,7 @@ describe(contractName, () => {
                 await vaultContract.addAdmin(account3.address);
 
                 // Call the requestWithdraw with account 1
-                await vaultContract.requestWithdraw(10);
+                await vaultContract.requestWithdraw(toEthers(10));
 
                 // Connect the contract to account 1 and call the approveWithdraw with it
                 await vaultContract.connect(account1).approveWithdraw();
@@ -514,7 +514,7 @@ describe(contractName, () => {
                 await vaultContract.addAdmin(account3.address);
 
                 // Call the requestWithdraw with account 1
-                await vaultContract.requestWithdraw(10);
+                await vaultContract.requestWithdraw(toEthers(10));
 
                 // Connect the contract to account 1 and call the approveWithdraw with it
                 await vaultContract.connect(account1).approveWithdraw();
@@ -585,7 +585,7 @@ describe(contractName, () => {
 
         it('Should retrieve 5 ETH withdrawn for signer account since exists only 2 administrators, 10% percentage and 10 ETH were requested', async () => {
             await vaultContract.addAdmin(account2.address);
-            await vaultContract.requestWithdraw(10);
+            await vaultContract.requestWithdraw(toEthers(10));
             await vaultContract.connect(account2).approveWithdraw();
             await vaultContract.connect(account1).withdraw();
             const withdrawnAmount = ethers.utils.formatEther(await vaultContract.withdrawnAmount());

@@ -1,11 +1,27 @@
-module.exports = {
-    ZERO_ADDRESS: '0x0000000000000000000000000000000000000000',
-};
+const { ethers } = require('hardhat');
 
-module.exports.contractABI = (contractName) => {
+const utils = {};
+
+utils.ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+
+utils.contractABI = (contractName) => {
     return require(`../artifacts/contracts/${contractName}.sol/${contractName}.json`);
 };
 
-module.exports.toEthers = (number) => {
-    return number * 1000000000000000000;
+/**
+ *
+ * @param {*} amount must be a number
+ * @returns a fixed number in ether unit by default
+ */
+utils.toEthers = (amount) => {
+    try {
+        if (!isNaN(amount)) {
+            return ethers.FixedNumber.fromString(amount.toString());
+        } else throw new Error('Amount must be a number');
+    } catch (e) {
+        console.error(e.message);
+        throw e;
+    }
 };
+
+module.exports = utils;
