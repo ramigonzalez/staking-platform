@@ -96,7 +96,7 @@ contract Vault {
 
     function sendToBurner(uint256 _amount, address _burnerAddress) external isValidAddress(_burnerAddress) {
         uint256 amountToTransfer = buyPrice * _amount / 2;
-        require(address(this).balance > amountToTransfer, 'Vault balance must be greater than the amount to transfer');
+        require(address(this).balance >= amountToTransfer, 'Vault balance must be greater or equal than the amount to transfer');
         payable(_burnerAddress).transfer(amountToTransfer);
     }
 
