@@ -10,7 +10,7 @@ contract Farm {
     /**
      * @dev Account Stakes
      */
-    mapping(address => uint256) _accounts;
+    mapping(address => uint256) _stakeIndexByAddress;
     AccountStake[] stakes;
     struct AccountStake {
         uint256 staked;
@@ -43,6 +43,7 @@ contract Farm {
         _tokenContract = ERC20Interface(_tokenContractAddress);
         _vaultAddress = _vaultContractAddress;
 
+        // Push an empty value to the array so we avoid using the index 0 in the array
         stakes.push();
     }
 
@@ -59,13 +60,13 @@ contract Farm {
         // Get or create sender staking info
         AccountStake memory stakeData;
         uint256 stakeIndex;
-        if (_accounts[msg.sender] == 0) {
+        if (_stakeIndexByAddress[msg.sender] == 0) {
             stakeData = AccountStake(0, 0 ,0);
             stakes.push(stakeData);
             stakeIndex = stakes.length - 1;
-            _accounts[msg.sender] = stakeIndex;
+            _stakeIndexByAddress[msg.sender] = stakeIndex;
         } else {
-            stakeIndex = _accounts[msg.sender];
+            stakeIndex = _stakeIndexByAddress[msg.sender];
             stakeData = stakes[stakeIndex];
 
             // Update generated yields
@@ -81,13 +82,13 @@ contract Farm {
     }
 
     function unstake(uint256 _amount) external {
-        require(_accounts[msg.sender] != 0, "Account doesn't have any deposit");
+        require(_stakeIndexByAddress[msg.sender] != 0, "Account doesn't have any deposit");
         require(_amount > 0, 'Cannot unstake nothing');
-        require(stakes[_accounts[msg.sender]].staked >= _amount, 'Cannot unstake more than the staked amount');
+        require(stakes[_stakeIndexByAddress[msg.sender]].staked >= _amount, 'Cannot unstake more than the staked amount');
         require(_tokenContract.balanceOf(address(this)) >= _amount, 'Insufficient liquidity');
 
         // Get address staking info
-        AccountStake memory stakeData = stakes[_accounts[msg.sender]];
+        AccountStake memory stakeData = stakes[_stakeIndexByAddress[msg.sender]];
 
         // Calculate generated yield
         uint256 stakeYield = getYield(stakeData.staked, stakeData.lastChangeTimestamp);
@@ -96,7 +97,7 @@ contract Farm {
         stakeData.staked -= _amount;
         stakeData.yieldStored += stakeYield;
         stakeData.lastChangeTimestamp = block.timestamp;
-        stakes[_accounts[msg.sender]] = stakeData;
+        stakes[_stakeIndexByAddress[msg.sender]] = stakeData;
         _totalStake -= _amount;
 
         // Send tokens to address
@@ -105,10 +106,10 @@ contract Farm {
     }
 
     function withdrawYield() external {
-        require(_accounts[msg.sender] != 0, "Account doesn't have any deposit");
+        require(_stakeIndexByAddress[msg.sender] != 0, "Account doesn't have any deposit");
 
         // Get address staking info
-        AccountStake memory stakeData = stakes[_accounts[msg.sender]];
+        AccountStake memory stakeData = stakes[_stakeIndexByAddress[msg.sender]];
 
         // Calculate generated yield
         uint256 stakeYield = getYield(stakeData.staked, stakeData.lastChangeTimestamp);
@@ -120,7 +121,7 @@ contract Farm {
         // Update account staking info
         stakeData.yieldStored = 0;
         stakeData.lastChangeTimestamp = block.timestamp;
-        stakes[_accounts[msg.sender]] = stakeData;
+        stakes[_stakeIndexByAddress[msg.sender]] = stakeData;
         _totalYieldPaid += yield;
 
         // Send yield to address
@@ -129,11 +130,11 @@ contract Farm {
     }
 
     function getYield() external view returns (uint256) {
-        if (_accounts[msg.sender] == 0) {
+        if (_stakeIndexByAddress[msg.sender] == 0) {
             return 0;
         }
         // Get address staking info
-        AccountStake memory stakeData = stakes[_accounts[msg.sender]];
+        AccountStake memory stakeData = stakes[_stakeIndexByAddress[msg.sender]];
 
         // Calculate generated yield
         uint256 stakeYield = getYield(stakeData.staked, stakeData.lastChangeTimestamp);
@@ -143,7 +144,7 @@ contract Farm {
     }
 
     function getStake() external view returns (uint256) {
-        AccountStake memory accountStake = stakes[_accounts[msg.sender]];
+        AccountStake memory accountStake = stakes[_stakeIndexByAddress[msg.sender]];
         return accountStake.staked;
     }
 
