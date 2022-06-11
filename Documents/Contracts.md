@@ -11,8 +11,6 @@ Transfer <.. TokenContract
 Approval <.. TokenContract
 Farm o-- AccountStake
 
-
-
 class ERC20Interface {
     +name() string
     +symbol() string
@@ -72,5 +70,12 @@ class Farm {
     +getTotalStake() uint256 
     +getTotalYieldPaid() uint256
     +getAPR() uint256
+}
+
+class AccountStake {
+    <<struct>>
+    +staked: uint256
+    +lastChangeTimestamp: uint256
+    +yieldStored: uint256
 }
 ```
