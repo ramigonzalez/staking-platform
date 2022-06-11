@@ -20,7 +20,7 @@ describe(contractName, async () => {
     let farmContract;
     let tokenContract;
 
-    const [wallet, walletTo, allowedWallet] = provider.getWallets();
+    const [wallet, walletTo, anotherWallet] = provider.getWallets();
 
     describe('Deployment', async () => {
         // Before execute the test suit will deploy the contract once.
@@ -258,6 +258,10 @@ describe(contractName, async () => {
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
                 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
+
+                await tokenContract.transfer(anotherWallet.address, 100);
+                const tokenContractFromOtherWallet = tokenContract.connect(anotherWallet);
+                await tokenContractFromOtherWallet.approve(farmContract.address, INITIAL_AMOUNT);
             });
 
             it('Total Stake starts at 0', async () => {
@@ -268,6 +272,17 @@ describe(contractName, async () => {
                 await farmContract.stake(100);
 
                 expect(await farmContract.getTotalStake()).to.eq(100);
+            });
+
+            it('Total Stake increases correctly with stakes from 2 wallets', async () => {
+                await farmContract.stake(100);
+
+                expect(await farmContract.getTotalStake()).to.eq(100);
+
+                const farmContractFromOtherWallet = farmContract.connect(anotherWallet);
+                await farmContractFromOtherWallet.stake(50);
+
+                expect(await farmContract.getTotalStake()).to.eq(150);
             });
 
             it('Total Stake decreases with unstaking', async () => {
