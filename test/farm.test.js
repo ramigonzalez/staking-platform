@@ -1,7 +1,7 @@
 const { expect, use } = require('chai');
 const { waffle } = require('hardhat');
 const { deployContract, provider, solidity } = waffle;
-const { ZERO_ADDRESS, contractABI } = require('./utils');
+const { ZERO_ADDRESS, contractABI, toEthers, increaseOneYear, increaseTwoYears } = require('./utils');
 
 use(solidity);
 
@@ -15,8 +15,7 @@ describe(contractName, async () => {
         console.log('------------------------------------------------------------------------------------');
     });
     // Constants
-    const TOKEN_DECIMAL = 18;
-    const INITIAL_AMOUNT = ethers.BigNumber.from(10).pow(18);
+    const INITIAL_AMOUNT = toEthers(10);
 
     let farmContract;
     let tokenContract;
@@ -32,7 +31,7 @@ describe(contractName, async () => {
             farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
         });
 
-        it(`APR should be 0`, async () => {
+        it(`APR should be 20`, async () => {
             const apr = await farmContract.getAPR();
             expect(apr).to.equal(20);
         });
@@ -81,7 +80,7 @@ describe(contractName, async () => {
             });
 
             it('Should revert transactions since "allowance" is not enough', async () => {
-                const bigNumber = ethers.BigNumber.from(100).pow(18);
+                const bigNumber = toEthers(100);
                 await expect(farmContract.stake(bigNumber)).to.be.revertedWith('Insufficient allowance');
             });
 
@@ -133,7 +132,7 @@ describe(contractName, async () => {
             });
 
             it('Should revert transactions since "allowance" is not enough', async () => {
-                const bigNumber = ethers.BigNumber.from(100).pow(18);
+                const bigNumber = toEthers(100);
                 await expect(farmContract.unstake(bigNumber)).to.be.revertedWith('Cannot unstake more than the staked amount');
             });
         });
@@ -152,16 +151,14 @@ describe(contractName, async () => {
 
             it('Should transfer balance from Farm to Sender', async () => {
                 // Increase network by 1 year
-                await network.provider.send("evm_increaseTime", [60 * 60 * 24 * 365]);
-                await network.provider.send("evm_mine");
+                await increaseOneYear(network);
 
                 await expect(() => farmContract.withdrawYield()).to.changeTokenBalances(tokenContract, [wallet, farmContract], [20, -20]);
             });
 
             it('Should emit Stake event with proper parameters', async () => {
                 // Increase network by 2 years
-                await network.provider.send("evm_increaseTime", [60 * 60 * 24 * 365 * 2]);
-                await network.provider.send("evm_mine");
+                await increaseTwoYears(network);
 
                 await expect(farmContract.withdrawYield()).to.emit(farmContract, 'WithdrawYield').withArgs(wallet.address, 40);
             });
@@ -201,8 +198,7 @@ describe(contractName, async () => {
 
             it('Yield increases to 20 after 1 year with APR 20', async () => {
                 // Increase network by 1 year
-                await network.provider.send("evm_increaseTime", [60 * 60 * 24 * 365]);
-                await network.provider.send("evm_mine");
+                await increaseOneYear(network);
 
                 expect(await farmContract.getYield()).to.eq(20);
             });
@@ -212,20 +208,17 @@ describe(contractName, async () => {
                 expect(await farmContractFromOtherWallet.getYield()).to.eq(0);
 
                 // Increase network by 2 years
-                await network.provider.send("evm_increaseTime", [60 * 60 * 24 * 365 * 2]);
-                await network.provider.send("evm_mine");
+                await increaseTwoYears(network);
                 expect(await farmContractFromOtherWallet.getYield()).to.eq(0);
             });
 
             it('Yield doesn\'t increase if unstaked', async () => {
-                await network.provider.send("evm_increaseTime", [60 * 60 * 24 * 365]);
-                await network.provider.send("evm_mine");
+                await increaseOneYear(network);
                 expect(await farmContract.getYield()).to.eq(20);
 
                 await farmContract.unstake(100);
 
-                await network.provider.send("evm_increaseTime", [60 * 60 * 24 * 365]);
-                await network.provider.send("evm_mine");
+                await increaseOneYear(network);
                 expect(await farmContract.getYield()).to.eq(20);
             });
         });
@@ -305,8 +298,7 @@ describe(contractName, async () => {
 
             it('Total Yield Paid increases correctly', async () => {
                 await farmContract.stake(100);
-                await network.provider.send("evm_increaseTime", [60 * 60 * 24 * 365 * 2]);
-                await network.provider.send("evm_mine");
+                await increaseTwoYears(network);
 
                 await farmContract.withdrawYield();
 
