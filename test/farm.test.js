@@ -305,6 +305,10 @@ describe(contractName, async () => {
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
                 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
+
+                await tokenContract.transfer(anotherWallet.address, 100);
+                const tokenContractFromOtherWallet = tokenContract.connect(anotherWallet);
+                await tokenContractFromOtherWallet.approve(farmContract.address, INITIAL_AMOUNT);
             });
 
             it('Total Yield Paid starts at 0', async () => {
@@ -318,6 +322,23 @@ describe(contractName, async () => {
                 await farmContract.withdrawYield();
 
                 expect(await farmContract.getTotalYieldPaid()).to.eq(40);
+            });
+
+            it('Total Yield Paid increases correctly from 2 wallets', async () => {
+                await farmContract.stake(100);
+                await increaseTwoYears(network);
+                
+                await farmContract.withdrawYield();
+                
+                expect(await farmContract.getTotalYieldPaid()).to.eq(40);
+                
+                const farmContractFromOtherWallet = farmContract.connect(anotherWallet);
+                await farmContractFromOtherWallet.stake(50);
+                await increaseOneYear(network);
+
+                await farmContractFromOtherWallet.withdrawYield()
+
+                expect(await farmContract.getTotalYieldPaid()).to.eq(50);
             });
         });
     });
