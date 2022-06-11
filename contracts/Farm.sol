@@ -57,27 +57,26 @@ contract Farm {
         _tokenContract.transferFrom(msg.sender, address(this), _amount);
         _totalStake += _amount;
 
-        // Get or create sender staking info
-        AccountStake memory stakeData;
-        uint256 stakeIndex;
+        // Update or create sender staking info
         if (_stakeIndexByAddress[msg.sender] == 0) {
-            stakeData = AccountStake(0, 0 ,0);
-            stakes.push(stakeData);
-            stakeIndex = stakes.length - 1;
-            _stakeIndexByAddress[msg.sender] = stakeIndex;
+            _stakeIndexByAddress[msg.sender] = stakes.length;
+
+            stakes.push(AccountStake(_amount, block.timestamp, 0));
         } else {
-            stakeIndex = _stakeIndexByAddress[msg.sender];
+            uint256 stakeIndex = _stakeIndexByAddress[msg.sender];
+            AccountStake memory stakeData;
             stakeData = stakes[stakeIndex];
 
             // Update generated yields
             uint256 stakeYield = getYield(stakeData.staked, stakeData.lastChangeTimestamp);
             stakeData.yieldStored += stakeYield;
+
+            // Update amount, and timestamp
+            stakeData.staked += _amount;
+            stakeData.lastChangeTimestamp = block.timestamp;
+            stakes[stakeIndex] = stakeData;
         }
 
-        // Update amount, and timestamp
-        stakeData.staked += _amount;
-        stakeData.lastChangeTimestamp = block.timestamp;
-        stakes[stakeIndex] = stakeData;
         emit Stake(address(msg.sender), _amount);
     }
 
