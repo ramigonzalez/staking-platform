@@ -34,6 +34,11 @@ contract Farm {
     event Unstake(address indexed _address, uint256 _value);
     event WithdrawYield(address indexed _address, uint256 _value);
 
+    modifier MustHaveDeposit() {
+        require(_stakeIndexByAddress[msg.sender] != 0, "Account doesn't have any deposit");
+        _;
+    }
+
     /**
      * @dev Contract constructor with both TokenContract and Vault addresses
      */
@@ -80,11 +85,10 @@ contract Farm {
         emit Stake(address(msg.sender), _amount);
     }
 
-    function unstake(uint256 _amount) external {
-        require(_stakeIndexByAddress[msg.sender] != 0, "Account doesn't have any deposit");
+    function unstake(uint256 _amount) external MustHaveDeposit {
         require(_amount > 0, 'Cannot unstake nothing');
         require(stakes[_stakeIndexByAddress[msg.sender]].staked >= _amount, 'Cannot unstake more than the staked amount');
-        require(_tokenContract.balanceOf(address(this)) >= _amount, 'Insufficient liquidity');
+        checkFarmLiquidity(_amount);
 
         // Get address staking info
         AccountStake memory stakeData = stakes[_stakeIndexByAddress[msg.sender]];
@@ -104,9 +108,7 @@ contract Farm {
         emit Unstake(address(msg.sender), _amount);
     }
 
-    function withdrawYield() external {
-        require(_stakeIndexByAddress[msg.sender] != 0, "Account doesn't have any deposit");
-
+    function withdrawYield() external MustHaveDeposit {
         // Get address staking info
         AccountStake memory stakeData = stakes[_stakeIndexByAddress[msg.sender]];
 
@@ -115,7 +117,7 @@ contract Farm {
         uint256 yield = stakeYield + stakeData.yieldStored;
 
         // Check for Farm liquidity
-        require(_tokenContract.balanceOf(address(this)) >= yield, 'Insufficient liquidity');
+        checkFarmLiquidity(yield);
 
         // Update account staking info
         stakeData.yieldStored = 0;
@@ -162,5 +164,9 @@ contract Farm {
     function getYield(uint256 _staked, uint256 _lastChange) private view returns (uint256) {
         uint256 interest = (_currentAPR * (block.timestamp - _lastChange) * 10**5) / milisecondsPerYear;
         return (_staked * interest) / (100 * 10**5);
+    }
+
+    function checkFarmLiquidity(uint256 amount) private view { 
+        require(_tokenContract.balanceOf(address(this)) >= amount, 'Insufficient liquidity');
     }
 }
