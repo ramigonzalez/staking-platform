@@ -315,7 +315,7 @@ describe(contractName, async () => {
             });
 
             it('Should revert transaction when sender address is Vault contract', async () => {
-                await tokenContract.setVaultAddress(tokenContract.address);
+                await tokenContract.connect(vaultContract.address);
                 const amount = 0;
                 await expect(tokenContract.burn(amount)).to.be.revertedWith(
                     'Vault contract cannot make this call'
