@@ -50,7 +50,7 @@ describe(contractName, () => {
         });
 
         it('0x0 cannot be added as admin', async () => {
-            await expect(vaultContract.addAdmin(ZERO_ADDRESS)).to.be.revertedWith('The provided address is not valid for an admin');
+            await expect(vaultContract.addAdmin(ZERO_ADDRESS)).to.be.revertedWith('The provided address is not valid');
         });
 
         it('Non admin cannot remove admin', async () => {
@@ -75,7 +75,7 @@ describe(contractName, () => {
         });
 
         it('Removing 0x0 from admin fails', async () => {
-            await expect(vaultContract.connect(account1).removeAdmin(ZERO_ADDRESS)).to.be.revertedWith('The provided address is not valid for an admin');
+            await expect(vaultContract.connect(account1).removeAdmin(ZERO_ADDRESS)).to.be.revertedWith('The provided address is not valid');
         });
     });
 

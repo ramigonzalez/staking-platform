@@ -20,6 +20,11 @@ contract TokenContract {
 
     address private vaultAddress;
 
+    modifier isValidAddress(address _address) {
+        require(_address != address(0) && _address != address(this), 'The provided address is not valid');
+        _;
+    }
+
     constructor(uint256 _initialAmount) {
         require(_initialAmount > 0, 'Initial amount must be greater than zero');
         totalSupply = _initialAmount;
@@ -27,8 +32,7 @@ contract TokenContract {
         emit Transfer(address(0x0), address(msg.sender), _initialAmount);
     }
 
-    function setVaultAddress (address _vaultAddress) external {
-        require(_vaultAddress != address(0), 'Vault address cannot be address(0)');
+    function setVaultAddress (address _vaultAddress) external isValidAddress(_vaultAddress) {
         vaultAddress = _vaultAddress;
     }
 

@@ -58,7 +58,7 @@ contract Vault {
     }
 
     modifier isValidAddress(address _address) {
-        require(_address != address(0) && _address != address(this), 'The provided address is not valid for an admin');
+        require(_address != address(0) && _address != address(this), 'The provided address is not valid');
         _;
     }
 
@@ -67,8 +67,7 @@ contract Vault {
         administrators[msg.sender] = true;
     }
 
-    function setTokenContractAddress (address _tokenContractAddress) external {
-        require(_tokenContractAddress != address(0), 'TokenContract address cannot be address(0)');
+    function setTokenContractAddress (address _tokenContractAddress) external isValidAddress(_tokenContractAddress) {
         tokenContractAddress = _tokenContractAddress;
     }
 
