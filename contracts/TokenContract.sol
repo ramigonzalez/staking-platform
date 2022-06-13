@@ -25,6 +25,11 @@ contract TokenContract {
         _;
     }
 
+        modifier isValidVaultAddress() {
+        require(vaultAddress != address(0) && vaultAddress != address(this), 'The Vault address is not valid');
+        _;
+    }
+
     constructor(uint256 _initialAmount) {
         require(_initialAmount > 0, 'Initial amount must be greater than zero');
         totalSupply = _initialAmount;
@@ -110,7 +115,7 @@ contract TokenContract {
      * @dev It burns an @param _amount from the balance of the sender and sends to the burner 
      * the 50 percent of the amount * buyPrice. 
      */
-    function burn(uint256 _amount) external {
+    function burn(uint256 _amount) external isValidVaultAddress {
         require(msg.sender != vaultAddress, 'Vault contract cannot make this call');
         require(_amount > 0, '_amount must be greater than 0');
         require(_amount <= _balances[msg.sender], '_amount cannot be greater than sender balance');
