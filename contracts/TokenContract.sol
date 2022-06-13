@@ -16,8 +16,9 @@ contract TokenContract {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
+    event Burn(address indexed _burner, uint256 _value);
 
-    address public vaultAddress;
+    address private vaultAddress;
 
     constructor(uint256 _initialAmount) {
         require(_initialAmount > 0, 'Initial amount must be greater than zero');
@@ -27,6 +28,7 @@ contract TokenContract {
     }
 
     function setVaultAddress (address _vaultAddress) external {
+        require(_vaultAddress != address(0), 'Vault address cannot be address(0)');
         vaultAddress = _vaultAddress;
     }
 
@@ -113,6 +115,8 @@ contract TokenContract {
 
         bytes memory methodToCall = abi.encodeWithSignature('sendToBurner(uint256,address)', _amount, msg.sender);
         (bool _success, bytes memory _returnData) = vaultAddress.call(methodToCall);
+
+        emit Burn(msg.sender, _amount);
 
         //require(_success == true, "Call to sendToBurner() failed");
     }

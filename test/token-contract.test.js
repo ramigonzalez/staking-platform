@@ -287,34 +287,18 @@ describe(contractName, async () => {
                 await vaultContract.setBuyPrice(10);
             });
         describe('Ok scenarios', async () => {
-            beforeEach(async () => {
-                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
-                vaultContract = await deployContract(wallet, VAULT_ABI);
-                await tokenContract.setVaultAddress(vaultContract.address);
-                await vaultContract.setSellPrice(15);
-                await vaultContract.setBuyPrice(10);
-            });
-
             it('Should burn tokens on "sender" behalf', async () => {
                 const amount = 20;
                 await tokenContract.burn(amount);
 
                 expect(await tokenContract.balanceOf(wallet.address)).to.be.equal(INITIAL_AMOUNT-amount);
                 expect(await tokenContract.totalSupply()).to.be.equal(INITIAL_AMOUNT-amount);
-                //expect(await tokenContract.balanceOf(vaultContract.address)).to.be.equal(INITIAL_AMOUNT-amount);
             });
         });
 
         describe('Reverted transactions', async () => {
-            beforeEach(async () => {
-                vaultContract = await deployContract(wallet, VAULT_ABI);
-                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
-                await tokenContract.setVaultAddress(vaultContract.address);
-                await vaultContract.setSellPrice(15);
-                await vaultContract.setBuyPrice(10);
-            });
-
             it('Should revert transaction when sender address is Vault contract', async () => {
+                await tokenContract.setVaultAddress(vaultContract.address);
                 await tokenContract.connect(vaultContract.address);
                 const amount = 0;
                 await expect(tokenContract.burn(amount)).to.be.revertedWith(

@@ -33,6 +33,11 @@ contract Vault {
     mapping(address => uint256) private withdrawals;
 
     /**
+     * @dev address of the TokenContract
+     */
+    address private tokenContractAddress;
+
+    /**
      * @dev structure to represent request withdraw details.
      * [initialized]: is used represent if the structure is being use or not
      */
@@ -60,6 +65,11 @@ contract Vault {
     constructor() payable {
         administratorsCount = 1;
         administrators[msg.sender] = true;
+    }
+
+    function setTokenContractAddress (address _tokenContractAddress) external {
+        require(_tokenContractAddress != address(0), 'TokenContract address cannot be address(0)');
+        tokenContractAddress = _tokenContractAddress;
     }
 
     function isAdmin(address _admin) external view returns (bool) {
@@ -95,8 +105,9 @@ contract Vault {
     }
 
     function sendToBurner(uint256 _amount, address _burnerAddress) external isValidAddress(_burnerAddress) {
+        require(address(msg.sender) == tokenContractAddress, 'Only TokenContract can call this function');
         uint256 amountToTransfer = buyPrice * _amount / 2;
-        require(address(this).balance >= amountToTransfer, 'Vault balance must be greater or equal than the amount to transfer');
+        require(amountToTransfer <= address(this).balance, 'The amount to transfer must be lower or equal than the Vault balance');
         payable(_burnerAddress).transfer(amountToTransfer);
     }
 
