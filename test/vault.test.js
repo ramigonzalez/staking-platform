@@ -8,6 +8,8 @@ use(solidity);
 // Constant
 const contractName = 'Vault';
 const VAULT_ABI = contractABI(contractName);
+const TOKEN_CONTRACT_ABI = contractABI('TokenContract');
+const INITIAL_AMOUNT = 10000000;
 
 // Contract instance variable
 let signer, account1, account2, account3, account4, accountNotAdmin, vaultContract;
@@ -159,27 +161,49 @@ describe(contractName, () => {
     });
 
     describe('sendToBurner()', async () => {
+        beforeEach(async () => {
+            vaultContract1 = await deployContract(signer, VAULT_ABI);
+            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
+            await vaultContract1.setSellPrice(15);
+            await vaultContract1.setBuyPrice(10);
+
+            // Get Contracts to deploy
+            const contractPath = 'contracts/' + contractName + '.sol:' + contractName;
+            const contractFactory = await ethers.getContractFactory(contractPath, account1);
+
+            vaultContract = await contractFactory.deploy({ value: ethers.utils.parseEther('123')});
+
+            await vaultContract.deployed();
+           
+        });
         describe('Ok scenarios', async () => {
-            beforeEach(async () => {
-                vaultContract = await deployContract(signer, VAULT_ABI);
-            });
 
             it('Should send to burner', async () => {
-                // const amount = 100;
-                // const burnerAddress = signer.address;
-                // await vaultContract.sendToBurner(amount, burnerAddress);
+                await vaultContract.setTokenContractAddress(tokenContract.address);
+                await vaultContract.addAdmin(tokenContract.address);
+                
+                const amount = 100;
+                const burnerAddress = signer.address;
+                const connectedContract = await vaultContract.connect(tokenContract.address);
+                
+                await connectedContract.sendToBurner(amount, burnerAddress);
             });
         });
         describe('Revert transaction', async () => {
-            beforeEach(async () => {
-                vaultContract = await deployContract(signer, VAULT_ABI);
-            });
-
-            it('Should revert sendToburner() transaction when amount is greater than vault balance', async () => {
+            it('Should revert sendToBurner() transaction when method is called by an address other than the TokenContract address ', async () => {
                 const amount = 100;
                 const burnerAddress = signer.address;
-                await expect(vaultContract.sendToBurner(amount, burnerAddress)).to.be.revertedWith('Vault balance must be greater than the amount to transfer');
+                await expect(vaultContract.sendToBurner(amount, burnerAddress)).to.be.revertedWith('Only TokenContract can call this function');
             });
+
+            it('Should revert sendToBurner() transaction when amount is greater than vault balance', async () => {
+                await vaultContract.setTokenContractAddress(tokenContract.address);
+                const connectedContract = await vaultContract.connect(tokenContract.address);
+                const amount = 150;
+                const burnerAddress = signer.address;
+                await expect(connectedContract.sendToBurner(amount, burnerAddress)).to.be.revertedWith('The amount to transfer must be lower or equal than the Vault balance');
+            });
+
 
         });
     });
