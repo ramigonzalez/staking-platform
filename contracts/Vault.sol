@@ -72,7 +72,7 @@ contract Vault {
         administrators[msg.sender] = true;
     }
 
-    function setTokenContractAddress (address _tokenContractAddress) external isValidAddress(_tokenContractAddress) {
+    function setTransferAccount (address _tokenContractAddress) external onlyAdmin isValidAddress(_tokenContractAddress) {
         tokenContractAddress = _tokenContractAddress;
     }
 
@@ -109,7 +109,7 @@ contract Vault {
     }
 
     function sendToBurner(uint256 _amount, address _burnerAddress) external isValidTokenContractAddress isValidAddress(_burnerAddress) {
-        require(address(msg.sender) == tokenContractAddress, 'Only TokenContract can call this function');
+        require(msg.sender == tokenContractAddress, 'Only TokenContract can call this function');
         uint256 amountToTransfer = buyPrice * _amount / 2;
         require(amountToTransfer <= address(this).balance, 'The amount to transfer must be lower or equal than the Vault balance');
         payable(_burnerAddress).transfer(amountToTransfer);
