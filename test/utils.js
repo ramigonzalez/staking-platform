@@ -35,7 +35,6 @@ utils.increaseTwoYears = async (network) => {
 }
 
 utils.increaseTime = async (network, time) => {
-    const ONE_YEAR = 60 * 60 * 24 * 365;
     await network.provider.send("evm_increaseTime", [time]);
     await network.provider.send("evm_mine");
 }
