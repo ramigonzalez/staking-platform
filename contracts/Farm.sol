@@ -43,7 +43,6 @@ contract Farm {
      * @dev Contract constructor with both TokenContract and Vault addresses
      */
     constructor(address _tokenContractAddress, address _vaultContractAddress) {
-        // TODO: Ask david if we have to set it like this or we can add a setter
         _tokenAddress = _tokenContractAddress;
         _tokenContract = ERC20Interface(_tokenContractAddress);
         _vaultAddress = _vaultContractAddress;
