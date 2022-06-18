@@ -34,13 +34,13 @@ contract Vault {
     mapping(address => uint256) private withdrawals;
 
     /**
-      * @dev address of the TokenContract
-      */
+     * @dev address of the TokenContract
+     */
     ERC20Interface private tokenContract;
 
     /**
-      * @dev Max amount of tokens bought/sold per transaction
-      */
+     * @dev Max amount of tokens bought/sold per transaction
+     */
     uint256 private maxTokenAmount;
 
     /**
@@ -72,10 +72,10 @@ contract Vault {
     }
 
     modifier contractIsReady() {
-        require(maxTokenAmount > 0, "Contract not ready: maxTokenAmount is 0");
-        require(sellPrice > 0, "Contract not ready: sellPrice is 0");
-        require(buyPrice > 0, "Contract not ready: buyPrice is 0");
-        require(address(tokenContract) != address(0), "Contract not ready: tokenContract is 0");
+        require(maxTokenAmount > 0, 'Contract not ready: maxTokenAmount is 0');
+        require(sellPrice > 0, 'Contract not ready: sellPrice is 0');
+        require(buyPrice > 0, 'Contract not ready: buyPrice is 0');
+        require(address(tokenContract) != address(0), 'Contract not ready: tokenContract is 0');
         _;
     }
 
@@ -84,7 +84,7 @@ contract Vault {
         administrators[msg.sender] = true;
     }
 
-    function setTransferAccount (address _tokenContractAddress) external onlyAdmin isValidAddress(_tokenContractAddress) {
+    function setTransferAccount(address _tokenContractAddress) external onlyAdmin isValidAddress(_tokenContractAddress) {
         require(isContract(_tokenContractAddress), 'The provided address is not a contract');
         tokenContract = ERC20Interface(_tokenContractAddress);
     }
@@ -228,21 +228,21 @@ contract Vault {
      * @dev The maximum amount is the max amount an address can buy per transaction
      */
     function setMaxAmountToTransfer(uint256 _maxAmount) external onlyAdmin {
-        require(_maxAmount > 0, "The amount must be greater than 0");
+        require(_maxAmount > 0, 'The amount must be greater than 0');
         maxTokenAmount = _maxAmount;
     }
 
     /**
-     * @dev Sell tokens to the contract 
+     * @dev Sell tokens to the contract
      */
     function exchangeEther(uint256 _tokensAmount) external onlyAdmin contractIsReady {
-        require(_tokensAmount > 0, "The amount must be greater than 0");
+        require(_tokensAmount > 0, 'The amount must be greater than 0');
         require(tokenContract.balanceOf(msg.sender) >= _tokensAmount, "The amount must be lower than the sender's balance");
-        require(tokenContract.allowance(msg.sender, address(this)) >= _tokensAmount, "Not enought allowance");
-        require(maxTokenAmount >= _tokensAmount, "Contract cannot buy more than the maximum amount");
+        require(tokenContract.allowance(msg.sender, address(this)) >= _tokensAmount, 'Not enought allowance');
+        require(maxTokenAmount >= _tokensAmount, 'Contract cannot buy more than the maximum amount');
 
         uint256 ethersToSend = _tokensAmount * buyPrice;
-        require(address(this).balance >= ethersToSend, "Not enought liquidity");
+        require(address(this).balance >= ethersToSend, 'Not enought liquidity');
 
         tokenContract.transferFrom(msg.sender, address(this), _tokensAmount);
         payable(msg.sender).transfer(ethersToSend);
@@ -254,7 +254,7 @@ contract Vault {
      */
     receive() external payable contractIsReady {
         uint256 maxAmount = msg.value / sellPrice;
-        require(maxTokenAmount >= maxAmount, "Contract cannot sell more than the maximum amount");
+        require(maxTokenAmount >= maxAmount, 'Contract cannot sell more than the maximum amount');
 
         uint256 tokensToSell;
         uint256 ethersToReturn;
@@ -279,8 +279,10 @@ contract Vault {
     function isContract(address addr) private view returns (bool) {
         bytes32 accountHash = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
 
-        bytes32 codeHash;    
-        assembly { codeHash := extcodehash(addr) }
+        bytes32 codeHash;
+        assembly {
+            codeHash := extcodehash(addr)
+        }
 
         return (codeHash != accountHash && codeHash != 0x0);
     }

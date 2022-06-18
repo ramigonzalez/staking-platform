@@ -662,11 +662,11 @@ describe(contractName, () => {
             it('Should revert if address is ZERO_ADDRESS', async () => {
                 await expect(vaultContract.setTransferAccount(ZERO_ADDRESS)).to.be.revertedWith('The provided address is not valid');
             });
-    
+
             it('Should revert if address is own contract', async () => {
                 await expect(vaultContract.setTransferAccount(vaultContract.address)).to.be.revertedWith('The provided address is not valid');
             });
-    
+
             it('Should revert if address is an external address', async () => {
                 await expect(vaultContract.setTransferAccount(account1.address)).to.be.revertedWith('The provided address is not a contract');
             });
@@ -712,7 +712,7 @@ describe(contractName, () => {
 
                 await expect(async () => {
                     await account1.sendTransaction({
-                        to: vaultContract.address, 
+                        to: vaultContract.address,
                         value: ethers.utils.parseEther('10')
                     })
                 }).to.changeTokenBalances(tokenContract, [account1, vaultContract], [2, -2]);
@@ -729,7 +729,7 @@ describe(contractName, () => {
 
                 await expect(async () => {
                     await account1.sendTransaction({
-                        to: vaultContract.address, 
+                        to: vaultContract.address,
                         value: ethers.utils.parseEther('10')
                     })
                 }).to.changeTokenBalances(tokenContract, [account1, vaultContract], [5, -5]);
@@ -745,8 +745,8 @@ describe(contractName, () => {
                 await tokenContract.transfer(vaultContract.address, 10);
 
                 await expect(account1.sendTransaction({
-                        to: vaultContract.address, 
-                        value: ethers.utils.parseEther('10')
+                    to: vaultContract.address,
+                    value: ethers.utils.parseEther('10')
                 })).to.emit(vaultContract, 'Sell').withArgs(account1.address, 5, ethers.utils.parseEther('2'));
             });
         });
@@ -754,7 +754,7 @@ describe(contractName, () => {
         describe('Revert transactions', async () => {
             it('Should revert if maxTokenAmount is still zero', async () => {
                 await expect(account1.sendTransaction({
-                    to: vaultContract.address, 
+                    to: vaultContract.address,
                     value: ethers.utils.parseEther('1')
                 })).to.be.revertedWith('Contract not ready: maxTokenAmount is 0');
             });
@@ -763,7 +763,7 @@ describe(contractName, () => {
                 await vaultContract.setMaxAmountToTransfer(10);
 
                 await expect(account1.sendTransaction({
-                    to: vaultContract.address, 
+                    to: vaultContract.address,
                     value: ethers.utils.parseEther('1')
                 })).to.be.revertedWith('Contract not ready: sellPrice is 0');
             });
@@ -773,7 +773,7 @@ describe(contractName, () => {
                 await vaultContract.setSellPrice(1);
 
                 await expect(account1.sendTransaction({
-                    to: vaultContract.address, 
+                    to: vaultContract.address,
                     value: ethers.utils.parseEther('1')
                 })).to.be.revertedWith('Contract not ready: buyPrice is 0');
             });
@@ -784,7 +784,7 @@ describe(contractName, () => {
                 await vaultContract.setBuyPrice(1);
 
                 await expect(account1.sendTransaction({
-                    to: vaultContract.address, 
+                    to: vaultContract.address,
                     value: ethers.utils.parseEther('1')
                 })).to.be.revertedWith('Contract not ready: tokenContract is 0');
             });
@@ -795,7 +795,7 @@ describe(contractName, () => {
                 await vaultContract.setBuyPrice(1);
 
                 await expect(account1.sendTransaction({
-                    to: vaultContract.address, 
+                    to: vaultContract.address,
                     value: ethers.utils.parseEther('100')
                 })).to.be.revertedWith('Contract cannot sell more than the maximum amount');
             });
