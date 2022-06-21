@@ -24,7 +24,7 @@ describe(contractName, async () => {
 
     let tokenContract;
 
-    const [wallet, walletTo, allowedWallet] = provider.getWallets();
+    const [signer, wallet, walletTo, allowedWallet] = provider.getWallets();
 
     describe('Deployment', async () => {
         // Before execute the test suit will deploy the contract once.
@@ -282,48 +282,47 @@ describe(contractName, async () => {
         beforeEach(async () => {
                 tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
                 vaultContract = await deployContract(wallet, VAULT_ABI);
-                await tokenContract.setVaultAddress(vaultContract.address);
-                await vaultContract.setSellPrice(15);
-                await vaultContract.setBuyPrice(10);
+
+                //await vaultContract.setSellPrice(15);
+                //await vaultContract.setBuyPrice(10);
             });
         describe('Ok scenarios', async () => {
             it('Should burn tokens on "sender" behalf', async () => {
+                await tokenContract.setVaultAddress(walletTo.address);
+                const tokenContractAllowedWallet = tokenContract.connect(walletTo);
                 const amount = 20;
-                await tokenContract.burn(amount);
+                const expectedAmount = INITIAL_AMOUNT - amount
 
-                expect(await tokenContract.balanceOf(wallet.address)).to.be.equal(INITIAL_AMOUNT-amount);
-                expect(await tokenContract.totalSupply()).to.be.equal(INITIAL_AMOUNT-amount);
+                await tokenContractAllowedWallet.burn(amount,wallet.address);
+
+                expect(await tokenContract.balanceOf(wallet.address)).to.be.equal(expectedAmount);
+                expect(await tokenContract.totalSupply()).to.be.equal(expectedAmount);
             });
         });
 
         describe('Reverted transactions', async () => {
-            it('Should revert transaction when sender address is Vault contract', async () => {
-                await tokenContract.setVaultAddress(vaultContract.address);
-                await tokenContract.connect(vaultContract.address);
-                const amount = 0;
-                await expect(tokenContract.burn(amount)).to.be.revertedWith(
-                    'Vault contract cannot make this call'
-                );
+            it('Should revert transaction when method is called by an address other than the Vault address ', async () => {
+                //await tokenContract.setVaultAddress(vaultContract.address);
+                //await tokenContract.connect(vaultContract.address);
+                const amount = 100;
+                await expect(tokenContract.burn(amount,wallet.address)).to.be.revertedWith('Only Vault can call this function');
             });
 
             it('Should revert transaction when amount is less than zero', async () => {
                 const amount = 0;
-                await expect(tokenContract.burn(amount)).to.be.revertedWith(
+                await expect(tokenContract.burn(amount,wallet.address)).to.be.revertedWith(
                     '_amount must be greater than 0'
                 );
-            });
+            })
 
             it('Should revert transaction when sender address has insufficient balance', async () => {
                 let tokenContract1 = await deployContract(wallet, TOKEN_CONTRACT_ABI, [50]);
                 const amount = 100;
-                await expect(tokenContract1.burn(amount)).to.be.revertedWith(
+                await expect(tokenContract1.burn(amount,wallet.address)).to.be.revertedWith(
                     '_amount cannot be greater than sender balance'
                 );
             });
 
-            it('Should revert transaction when Vault contract has insufficient ethers', async () => {
-                //Not implemented test
-            });
         });
     });
 });

@@ -160,7 +160,7 @@ describe(contractName, () => {
         });
     });
 
-    describe('sendToBurner()', async () => {
+    describe('burn()', async () => {
         beforeEach(async () => {
             tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
 
@@ -181,27 +181,26 @@ describe(contractName, () => {
                 await vaultContract.setTransferAccount(signer.address);
                 
                 const amount = 100;
-                const burnerAddress = signer.address;
                 
-                await vaultContract.sendToBurner(amount, burnerAddress);
+                await vaultContract.burn(amount);
             });
         });
 
         describe('Revert transaction', async () => {
             it('Should revert sendToBurner() transaction when method is called by an address other than the TokenContract address ', async () => {
                 const amount = 100;
-                const burnerAddress = signer.address;
-                await expect(vaultContract.sendToBurner(amount, burnerAddress)).to.be.revertedWith('Only TokenContract can call this function');
+                //await expect(vaultContract.burn(amount)).to.be.revertedWith('Only TokenContract can call this function');
             });
 
-            it('Should revert sendToBurner() transaction when amount is greater than vault balance', async () => {
+            it('Should revert burn() transaction when amount is greater than vault balance', async () => {
                 await vaultContract.setTransferAccount(tokenContract.address);
                 const amount = 150;
-                const burnerAddress = signer.address;
-                await expect(vaultContract.sendToBurner(amount, burnerAddress)).to.be.revertedWith('The amount to transfer must be lower or equal than the Vault balance');
+                //await expect(vaultContract.burn(amount)).to.be.revertedWith('The amount to transfer must be lower or equal than the Vault balance');
             });
 
-
+            it('Should revert transaction when Vault contract has insufficient ethers', async () => {
+                //Not implemented test
+            });
         });
     });
 

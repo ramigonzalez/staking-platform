@@ -108,11 +108,17 @@ contract Vault {
         buyPrice = _newBuyPrice;
     }
 
-    function sendToBurner(uint256 _amount, address _burnerAddress) external isValidTokenContractAddress isValidAddress(_burnerAddress) {
-        require(msg.sender == tokenContractAddress, 'Only TokenContract can call this function');
-        uint256 amountToTransfer = buyPrice * _amount / 2;
-        require(amountToTransfer <= address(this).balance, 'The amount to transfer must be lower or equal than the Vault balance');
-        payable(_burnerAddress).transfer(amountToTransfer);
+    function burn(uint256 _amount) external {
+        // require(msg.sender != tokenContractAddress, 'TokenContract cannot make this call');
+
+        bytes memory methodToCall = abi.encodeWithSignature('burn(uint256,address)', _amount, msg.sender);
+        (bool _success,) = tokenContractAddress.call(methodToCall);
+
+        if (_success == true) {
+            uint256 ethersToSend = buyPrice * _amount / 2;
+            require(ethersToSend <= address(this).balance, 'The amount of ethers to send must be lower or equal than the Vault balance');
+            payable(msg.sender).transfer(ethersToSend);
+        }
     }
 
     /**
