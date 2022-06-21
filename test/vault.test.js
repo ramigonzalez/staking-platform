@@ -843,7 +843,7 @@ describe(contractName, () => {
                 }).to.changeTokenBalances(tokenContract, [account1, vaultContract], [-2, 2]);
             });
 
-            it('Should emit a Sell event', async () => {
+            it('Should emit a Buy event', async () => {
                 await vaultContract.setMaxAmountToTransfer(10);
                 await vaultContract.setSellPrice(ethers.utils.parseEther('2'));
                 await vaultContract.setBuyPrice(ethers.utils.parseEther('1'));
