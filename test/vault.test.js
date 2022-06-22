@@ -341,8 +341,10 @@ describe(contractName, () => {
             });
 
             it('Should revert transaction since there is only one administrator in the contract list', async () => {
+                await vaultContract.addAdmin(account2.address);
                 // Call the requestWithdraw with account 1
                 await vaultContract.requestWithdraw(10);
+                await vaultContract.removeAdmin(account2.address);
 
                 await expect(vaultContract.approveWithdraw()).to.be.revertedWith('Cannot approve a withdraw with less than 2 administrators');
             });
