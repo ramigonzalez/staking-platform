@@ -86,7 +86,8 @@ describe(contractName, async () => {
             it('Should revert transactions since "sender" has 0 balance', async () => {
                 // Change msg.sender
                 const farmContractFromOtherWallet = farmContract.connect(walletTo);
-                await tokenContract.connect(walletTo).approve(farmContract.address, 100);
+                await tokenContract.connect(walletTo).approve(farmContract.address, 1000);
+
                 await expect(farmContractFromOtherWallet.stake(100)).to.be.revertedWith('Insufficient balance');
             });
         });
@@ -154,7 +155,7 @@ describe(contractName, async () => {
                 // Increase network by 1 year
                 await increaseOneYear(network);
 
-                await expect(() => farmContract.withdrawYield()).to.changeTokenBalances(tokenContract, [wallet, farmContract], [20, -20]);
+                await expect(farmContract.withdrawYield()).to.changeTokenBalances(tokenContract, [wallet, farmContract], [20, -20]);
             });
 
             it('Should emit Stake event with proper parameters', async () => {
