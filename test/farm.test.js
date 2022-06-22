@@ -4,19 +4,21 @@ const { ZERO_ADDRESS, contractABI, toEthers, increaseOneYear, increaseTwoYears, 
 const contractName = 'Farm';
 const FARM_ABI = contractABI(contractName);
 
+let wallet, walletTo, anotherWallet;
+
 describe(contractName, async () => {
-    before(() => {
+    before(async () => {
         console.log('------------------------------------------------------------------------------------');
         console.log('------------------------', contractName, 'Contract Test Start', '-------------------------');
         console.log('------------------------------------------------------------------------------------');
+
+        [wallet, walletTo, anotherWallet] = await providers();
     });
     // Constants
     const INITIAL_AMOUNT = toEthers(10);
 
     let farmContract;
     let tokenContract;
-
-    const [wallet, walletTo, anotherWallet] = providers();
 
     describe('Deployment', async () => {
         // Before execute the test suit will deploy the contract once.
