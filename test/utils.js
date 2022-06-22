@@ -7,8 +7,12 @@ utils.providers = async () => {
 }
 
 utils.deployContract = async (wallet, contractJSON, constructorArgs) => {
-    const args = constructorArgs == undefined ? {} : {...constructorArgs}
-    const instance = await ethers.ContractFactory.fromSolidity(contractJSON, wallet).deploy(args);
+    let instance = null;
+    if (constructorArgs == undefined) {
+        instance = await ethers.ContractFactory.fromSolidity(contractJSON, wallet).deploy();
+    } else {
+        instance = await ethers.ContractFactory.fromSolidity(contractJSON, wallet).deploy(...constructorArgs);
+    }
     await instance.deployed();
     return instance;
 }
@@ -35,16 +39,16 @@ utils.toEthers = (amount) => {
     }
 };
 
-// utils.toBigNumber = (amount) => {
-//     try {
-//         if (!isNaN(amount)) {
-//             return ethers.utils.formatEther((amount * 10 ** 18));
-//         } else throw new Error('Amount must be a number');
-//     } catch (e) {
-//         console.error(e.message);
-//         throw e;
-//     }
-// };
+utils.toBigNumber = (amount) => {
+    try {
+        if (!isNaN(amount)) {
+            return ethers.BigNumber.from(amount);
+        } else throw new Error('Amount must be a number');
+    } catch (e) {
+        console.error(e.message);
+        throw e;
+    }
+};
 
 utils.increaseOneYear = async (network) => {
     const ONE_YEAR = 60 * 60 * 24 * 365;
