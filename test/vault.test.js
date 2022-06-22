@@ -177,7 +177,7 @@ describe(contractName, () => {
 
         describe('Ok scenarios', async () => {
 
-            it('Should send to burner', async () => {
+            it('Should burn correctly', async () => {
                 await vaultContract.setTransferAccount(signer.address);
                 
                 const amount = 100;
@@ -187,19 +187,18 @@ describe(contractName, () => {
         });
 
         describe('Revert transaction', async () => {
-            it('Should revert sendToBurner() transaction when method is called by an address other than the TokenContract address ', async () => {
+            it('Should revert burn() transaction when method is called by TokenContract address ', async () => {
+                await vaultContract.setTransferAccount(walletTo.address);
+                const vaultConnected = tokenContract.connect(walletTo);
+
                 const amount = 100;
-                //await expect(vaultContract.burn(amount)).to.be.revertedWith('Only TokenContract can call this function');
+                await expect(vaultConnected.burn(amount)).to.be.revertedWith('TokenContract cannot make this call');
             });
 
             it('Should revert burn() transaction when amount is greater than vault balance', async () => {
                 await vaultContract.setTransferAccount(tokenContract.address);
                 const amount = 150;
-                //await expect(vaultContract.burn(amount)).to.be.revertedWith('The amount to transfer must be lower or equal than the Vault balance');
-            });
-
-            it('Should revert transaction when Vault contract has insufficient ethers', async () => {
-                //Not implemented test
+                await expect(vaultContract.burn(amount)).to.be.revertedWith('The amount of ethers to send must be lower or equal than the Vault balance');
             });
         });
     });

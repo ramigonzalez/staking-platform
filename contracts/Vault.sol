@@ -109,7 +109,7 @@ contract Vault {
     }
 
     function burn(uint256 _amount) external {
-        // require(msg.sender != tokenContractAddress, 'TokenContract cannot make this call');
+        require(msg.sender != tokenContractAddress, 'TokenContract cannot make this call');
 
         bytes memory methodToCall = abi.encodeWithSignature('burn(uint256,address)', _amount, msg.sender);
         (bool _success,) = tokenContractAddress.call(methodToCall);
