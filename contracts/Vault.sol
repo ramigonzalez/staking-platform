@@ -177,7 +177,6 @@ contract Vault {
      *      => (contractBalance [100] - (maxWithdraw [5] * administratorsCounts [3])) * 10% = 8.5 ETH
      */
     function checkMaximumAmountToWithdraw(uint256 _requestedAmount) public view returns (bool) {
-        console.log('address(this).balance', address(this).balance);
         uint256 _allowedBalance = address(this).balance - (maxWithdraw * administratorsCount);
         uint256 _maximumAmountToWithdraw = (_allowedBalance * percentageToWithdraw) / 100;
         return _requestedAmount <= _maximumAmountToWithdraw;
