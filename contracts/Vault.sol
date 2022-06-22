@@ -146,9 +146,9 @@ contract Vault {
 
         uint256 _contractBalance = address(this).balance;
 
-        require(checkMaximumAmountToWithdraw(_amount), 'Amount exceeds maximum percentage');
-
         require(_contractBalance >= _amount, 'There are insufficient funds to withdraw');
+
+        require(checkMaximumAmountToWithdraw(_amount), 'Amount exceeds maximum percentage');
 
         uint256 _amountPerAdmin = _amount / administratorsCount;
 
