@@ -23,7 +23,8 @@ describe(contractName, async () => {
     describe('Deployment', async () => {
         // Before execute the test suit will deploy the contract once.
         before(async () => {
-            const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
+            const vaultContract = await deployContract(wallet, contractABI('Vault'));
+
             tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
 
             farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
@@ -51,7 +52,7 @@ describe(contractName, async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
                 tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
-                
+
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
             });
 
@@ -96,7 +97,7 @@ describe(contractName, async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
                 tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
-                
+
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
                 await farmContract.stake(150);
             });
@@ -122,7 +123,7 @@ describe(contractName, async () => {
             it('Should revert transactions since "sender" has no staking', async () => {
                 // Change msg.sender
                 const farmContractFromOtherWallet = farmContract.connect(walletTo);
-                await expect(farmContractFromOtherWallet.unstake(100)).to.be.revertedWith('Account doesn\'t have any deposit');
+                await expect(farmContractFromOtherWallet.unstake(100)).to.be.revertedWith("Account doesn't have any deposit");
             });
 
             it('Should revert transactions since "_amount" is 0', async () => {
@@ -142,7 +143,7 @@ describe(contractName, async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
                 tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
-                
+
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
                 await farmContract.stake(100);
             });
@@ -174,7 +175,7 @@ describe(contractName, async () => {
             it('Should revert transactions since "sender" has no staking', async () => {
                 // Change msg.sender
                 const farmContractFromOtherWallet = farmContract.connect(walletTo);
-                await expect(farmContractFromOtherWallet.withdrawYield()).to.be.revertedWith('Account doesn\'t have any deposit');
+                await expect(farmContractFromOtherWallet.withdrawYield()).to.be.revertedWith("Account doesn't have any deposit");
             });
         });
     });
@@ -185,7 +186,7 @@ describe(contractName, async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
                 tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
-                
+
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
                 await farmContract.stake(100);
             });
@@ -210,7 +211,7 @@ describe(contractName, async () => {
                 expect(await farmContractFromOtherWallet.getYield()).to.eq(0);
             });
 
-            it('Yield doesn\'t increase if unstaked', async () => {
+            it("Yield doesn't increase if unstaked", async () => {
                 await increaseOneYear(network);
                 expect(await farmContract.getYield()).to.eq(20);
 
@@ -228,7 +229,7 @@ describe(contractName, async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
                 tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
-                
+
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
             });
 
@@ -254,7 +255,7 @@ describe(contractName, async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
                 tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
-                
+
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
 
                 await tokenContract.transfer(anotherWallet.address, 100);
@@ -301,7 +302,7 @@ describe(contractName, async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
                 tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
-                
+
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
 
                 await tokenContract.transfer(anotherWallet.address, 100);
@@ -325,16 +326,16 @@ describe(contractName, async () => {
             it('Total Yield Paid increases correctly from 2 wallets', async () => {
                 await farmContract.stake(100);
                 await increaseTwoYears(network);
-                
+
                 await farmContract.withdrawYield();
-                
+
                 expect(await farmContract.getTotalYieldPaid()).to.eq(40);
-                
+
                 const farmContractFromOtherWallet = farmContract.connect(anotherWallet);
                 await farmContractFromOtherWallet.stake(50);
                 await increaseOneYear(network);
 
-                await farmContractFromOtherWallet.withdrawYield()
+                await farmContractFromOtherWallet.withdrawYield();
 
                 expect(await farmContract.getTotalYieldPaid()).to.eq(50);
             });
