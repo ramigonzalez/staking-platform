@@ -54,8 +54,8 @@ contract Farm {
     function stake(uint256 _amount) external {
         require(_amount > 0, 'Cannot stake nothing');
         // In token contract must exists a record that indicates that Farm.sol (contract) is allowed to spend certain value (_amount) on user's (msg.sender) behalf.
-        require(_tokenContract.allowance(msg.sender, address(this)) > _amount, 'Insufficient allowance');
-        require(_tokenContract.balanceOf(msg.sender) > _amount, 'Insufficient balance');
+        require(_tokenContract.allowance(msg.sender, address(this)) >= _amount, 'Insufficient allowance');
+        require(_tokenContract.balanceOf(msg.sender) >= _amount, 'Insufficient balance');
 
         // Move address's tokens to Farm's balance
         _tokenContract.transferFrom(msg.sender, address(this), _amount);
@@ -165,7 +165,7 @@ contract Farm {
         return (_staked * interest) / (100 * 10**5);
     }
 
-    function checkFarmLiquidity(uint256 amount) private view { 
+    function checkFarmLiquidity(uint256 amount) private view {
         require(_tokenContract.balanceOf(address(this)) >= amount, 'Insufficient liquidity');
     }
 }
