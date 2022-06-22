@@ -2,6 +2,17 @@ const { ethers } = require('hardhat');
 
 const utils = {};
 
+utils.providers = async () => {
+    return await ethers.getSigners();
+}
+
+utils.deployContract = async (wallet, contractJSON, constructorArgs) => {
+    const args = constructorArgs == undefined ? {} : {...constructorArgs}
+    const instance = await ethers.ContractFactory.fromSolidity(contractJSON, wallet).deploy(args);
+    await instance.deployed();
+    return instance;
+}
+
 utils.ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
 utils.contractABI = (contractName) => {
@@ -23,6 +34,17 @@ utils.toEthers = (amount) => {
         throw e;
     }
 };
+
+// utils.toBigNumber = (amount) => {
+//     try {
+//         if (!isNaN(amount)) {
+//             return ethers.utils.formatEther((amount * 10 ** 18));
+//         } else throw new Error('Amount must be a number');
+//     } catch (e) {
+//         console.error(e.message);
+//         throw e;
+//     }
+// };
 
 utils.increaseOneYear = async (network) => {
     const ONE_YEAR = 60 * 60 * 24 * 365;

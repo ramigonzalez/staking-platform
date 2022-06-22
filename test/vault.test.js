@@ -1,9 +1,6 @@
-const { expect, use } = require('chai');
-const { waffle, ethers } = require('hardhat');
-const { deployContract, provider, solidity } = waffle;
-const { ZERO_ADDRESS, contractABI, toEthers } = require('./utils');
-
-use(solidity);
+const { expect } = require('chai');
+const { ethers } = require('hardhat');
+const { ZERO_ADDRESS, contractABI, toEthers, deployContract, providers, toBigNumber } = require('./utils');
 
 // Constant
 const contractName = 'Vault';
@@ -11,7 +8,7 @@ const VAULT_ABI = contractABI(contractName);
 const TOKEN_CONTRACT_ABI = contractABI('TokenContract');
 
 // Contract instance variable
-let signer, account1, account2, account3, account4, accountNotAdmin, vaultContract;
+let signer, account1, account2, account3, account4, accountNotAdmin, vaultContract, david;
 
 describe(contractName, () => {
     before(async () => {
@@ -20,10 +17,10 @@ describe(contractName, () => {
         console.log('------------------------------------------------------------------------------------');
 
         // Get signers
-        [signer, account1, account2, account3, account4, accountNotAdmin] = provider.getWallets();
+        [signer, account1, account2, account3, account4, accountNotAdmin, david] = await providers();
 
         // Deploy contract
-        vaultContract = await deployContract(signer, VAULT_ABI);
+        vaultContract = await deployContract(signer, VAULT_ABI, []);
     });
 
     describe('Admin features', async () => {
@@ -136,7 +133,7 @@ describe(contractName, () => {
             });
 
             it('Should revert buyPrice() transaction since amount is zero', async () => {
-                await expect(vaultContract.setBuyPrice(0)).to.be.revertedWith('Sell price must be greater than 0');
+                await expect(vaultContract.setBuyPrice(0)).to.be.revertedWith('Buy price must be greater than 0');
             });
 
             it('Should revert buyPrice() transaction since msg.sender is not an admin', async () => {
@@ -144,7 +141,7 @@ describe(contractName, () => {
             });
 
             it('Should revert buyPrice() transaction since sell price is not set', async () => {
-                await expect(vaultContract.setBuyPrice(100)).to.be.revertedWith('Sell price must be greater than 0');
+                await expect(vaultContract.setBuyPrice(100)).to.be.revertedWith('Sell price must be set first');
             });
 
             it('Should revert buyPrice() transaction sell price amount is greater than sell price', async () => {
@@ -224,7 +221,7 @@ describe(contractName, () => {
                 const adminCount = await vaultContractFromEthers.administratorsCount();
                 const requestWithdraw = await vaultContractFromEthers._requestWithdrawDetails();
 
-                const expectedAmountPerAdmin = toEthers(amount / adminCount);
+                const expectedAmountPerAdmin = toBigNumber(amount / adminCount);
 
                 expect(requestWithdraw.initialized).to.be.true;
                 expect(requestWithdraw.amountPerAdmin).to.be.equal(expectedAmountPerAdmin);
@@ -288,8 +285,14 @@ describe(contractName, () => {
             beforeEach(async () => {
                 vaultContract = await deployContract(signer, VAULT_ABI);
             });
+            it('Should revert transaction since there is only one admin', async () => {
+                const amountToWithdraw = toEthers(10);
+                await expect(vaultContract.requestWithdraw(amountToWithdraw)).to.be.revertedWith('Cannot initiate a request withdraw with less than 2 administrators');
+            });
+
             it('Should revert transaction since the contract has insufficients balance', async () => {
                 const amountToWithdraw = toEthers(10);
+                await vaultContract.addAdmin(david.address);
                 await expect(vaultContract.requestWithdraw(amountToWithdraw)).to.be.revertedWith('There are insufficient funds to withdraw');
             });
         });

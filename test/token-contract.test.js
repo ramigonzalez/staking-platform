@@ -1,9 +1,5 @@
-const { expect, use } = require('chai');
-const { waffle } = require('hardhat');
-const { deployContract, provider, solidity } = waffle;
-const { ZERO_ADDRESS, contractABI } = require('./utils');
-
-use(solidity);
+const { expect } = require('chai');
+const { ZERO_ADDRESS, contractABI, deployContract, providers } = require('./utils');
 
 const contractName = 'TokenContract';
 const TOKEN_CONTRACT_ABI = contractABI(contractName);
@@ -22,7 +18,7 @@ describe(contractName, async () => {
 
     let tokenContract;
 
-    const [wallet, walletTo, allowedWallet] = provider.getWallets();
+    const [wallet, walletTo, allowedWallet] = providers();
 
     describe('Deployment', async () => {
         // Before execute the test suit will deploy the contract once.
