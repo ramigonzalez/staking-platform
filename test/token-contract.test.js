@@ -4,11 +4,15 @@ const { ZERO_ADDRESS, contractABI, deployContract, providers } = require('./util
 const contractName = 'TokenContract';
 const TOKEN_CONTRACT_ABI = contractABI(contractName);
 
+let wallet, walletTo, anotherWallet;
+
 describe(contractName, async () => {
-    before(() => {
+    before(async () => {
         console.log('------------------------------------------------------------------------------------');
         console.log('------------------------', contractName, 'Contract Test Start', '-------------------------');
         console.log('------------------------------------------------------------------------------------');
+
+        [wallet, walletTo, anotherWallet] = await providers();
     });
     // Constants
     const TOKEN_NAME = 'Niery Token Papa';
@@ -17,8 +21,6 @@ describe(contractName, async () => {
     const INITIAL_AMOUNT = 10000000;
 
     let tokenContract;
-
-    const [wallet, walletTo, allowedWallet] = providers();
 
     describe('Deployment', async () => {
         // Before execute the test suit will deploy the contract once.
