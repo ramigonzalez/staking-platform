@@ -130,11 +130,13 @@ describe(contractName, async () => {
             });
 
             it('Should revert transactions since "_amount" is 0', async () => {
+                await farmContract.stake(toEthers(1));
                 await expect(farmContract.unstake(0)).to.be.revertedWith('Cannot unstake nothing');
             });
 
             it('Should revert transactions since "allowance" is not enough', async () => {
                 const bigNumber = toEthers(100);
+                await farmContract.stake(toEthers(1));
                 await expect(farmContract.unstake(bigNumber)).to.be.revertedWith('Cannot unstake more than the staked amount');
             });
         });
