@@ -282,9 +282,6 @@ describe(contractName, async () => {
         beforeEach(async () => {
                 tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
                 vaultContract = await deployContract(wallet, VAULT_ABI);
-
-                //await vaultContract.setSellPrice(15);
-                //await vaultContract.setBuyPrice(10);
             });
         describe('Ok scenarios', async () => {
             it('Should burn tokens on "sender" behalf', async () => {
@@ -302,21 +299,23 @@ describe(contractName, async () => {
 
         describe('Reverted transactions', async () => {
             it('Should revert transaction when method is called by an address other than the Vault address ', async () => {
-                //await tokenContract.setVaultAddress(vaultContract.address);
-                //await tokenContract.connect(vaultContract.address);
                 const amount = 100;
                 await expect(tokenContract.burn(amount,wallet.address)).to.be.revertedWith('Only Vault can call this function');
             });
 
             it('Should revert transaction when amount is less than zero', async () => {
+                await tokenContract.setVaultAddress(walletTo.address);
+                const tokenContractAllowedWallet = tokenContract.connect(walletTo);
                 const amount = 0;
-                await expect(tokenContract.burn(amount,wallet.address)).to.be.revertedWith(
+                await expect(tokenContractAllowedWallet.burn(amount,wallet.address)).to.be.revertedWith(
                     '_amount must be greater than 0'
                 );
             })
 
             it('Should revert transaction when sender address has insufficient balance', async () => {
                 let tokenContract1 = await deployContract(wallet, TOKEN_CONTRACT_ABI, [50]);
+                await tokenContract1.setVaultAddress(walletTo.address);
+                const tokenContractAllowedWallet = tokenContract1.connect(walletTo);
                 const amount = 100;
                 await expect(tokenContract1.burn(amount,wallet.address)).to.be.revertedWith(
                     '_amount cannot be greater than sender balance'
