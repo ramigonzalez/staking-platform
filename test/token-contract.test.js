@@ -4,7 +4,7 @@ const { ZERO_ADDRESS, contractABI, deployContract, providers } = require('./util
 const contractName = 'TokenContract';
 const TOKEN_CONTRACT_ABI = contractABI(contractName);
 
-let wallet, walletTo, anotherWallet;
+let wallet, walletTo, allowedWallet;
 
 describe(contractName, async () => {
     before(async () => {
@@ -12,7 +12,7 @@ describe(contractName, async () => {
         console.log('------------------------', contractName, 'Contract Test Start', '-------------------------');
         console.log('------------------------------------------------------------------------------------');
 
-        [wallet, walletTo, anotherWallet] = await providers();
+        [wallet, walletTo, allowedWallet] = await providers();
     });
     // Constants
     const TOKEN_NAME = 'Niery Token Papa';
@@ -198,12 +198,28 @@ describe(contractName, async () => {
                     "Tx signer is not allowed to transfer the desired amount on _from's behalf"
                 );
             });
+            it('Should revert transaction since "_from" address has insufficient allowance', async () => {
+                // 1. wallet allow allowedWallet to spend ALL tokens
+                await tokenContract.approve(allowedWallet.address, INITIAL_AMOUNT);
+
+                // 2. connect allowedWallet to the contract
+                const tokenContractAllowedWallet = tokenContract.connect(allowedWallet);
+
+                // Assert
+                await expect(tokenContractAllowedWallet.transferFrom(wallet.address, walletTo.address, INITIAL_AMOUNT + 100)).to.be.revertedWith(
+                    'Tx signer is not allowed to transfer the desired amount on _from\'s behalf'
+                );
+            });
+
             it('Should revert transaction since "_from" address has insufficient balance', async () => {
                 // 1. wallet allow allowedWallet to spend ALL tokens
                 await tokenContract.approve(allowedWallet.address, INITIAL_AMOUNT);
 
                 // 2. connect allowedWallet to the contract
                 const tokenContractAllowedWallet = tokenContract.connect(allowedWallet);
+
+                // 3. add allowance
+                await tokenContract.approve(allowedWallet.address, ethers.utils.parseEther('100'));
 
                 // Assert
                 await expect(tokenContractAllowedWallet.transferFrom(wallet.address, walletTo.address, INITIAL_AMOUNT + 100)).to.be.revertedWith(
