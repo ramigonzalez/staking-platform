@@ -340,6 +340,13 @@ describe(contractName, () => {
                 await expect(vaultContract.approveWithdraw()).to.be.revertedWith('There is no pending withdraw request for approve');
             });
 
+            it('Should revert transaction since there is only one administrator in the contract list', async () => {
+                // Call the requestWithdraw with account 1
+                await vaultContract.requestWithdraw(10);
+
+                await expect(vaultContract.approveWithdraw()).to.be.revertedWith('Cannot approve a withdraw with less than 2 administrators');
+            });
+
             it('Should revert transaction since the approval withdraw admin must be different from who requested it', async () => {
                 // Add a second administrator
                 await vaultContract.addAdmin(account2.address);

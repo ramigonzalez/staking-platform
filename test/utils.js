@@ -4,7 +4,7 @@ const utils = {};
 
 utils.providers = async () => {
     return await ethers.getSigners();
-}
+};
 
 utils.deployContract = async (wallet, contractJSON, constructorArgs) => {
     let instance = null;
@@ -15,7 +15,7 @@ utils.deployContract = async (wallet, contractJSON, constructorArgs) => {
     }
     await instance.deployed();
     return instance;
-}
+};
 
 utils.ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
 
@@ -53,16 +53,16 @@ utils.toBigNumber = (amount) => {
 utils.increaseOneYear = async (network) => {
     const ONE_YEAR = 60 * 60 * 24 * 365;
     await utils.increaseTime(network, ONE_YEAR);
-}
+};
 
 utils.increaseTwoYears = async (network) => {
     const TWO_YEARS = 60 * 60 * 24 * 365 * 2;
     await utils.increaseTime(network, TWO_YEARS);
-}
+};
 
 utils.increaseTime = async (network, time) => {
-    await network.provider.send("evm_increaseTime", [time]);
-    await network.provider.send("evm_mine");
-}
+    await network.provider.send('evm_increaseTime', [time]);
+    await network.provider.send('evm_mine');
+};
 
 module.exports = utils;
