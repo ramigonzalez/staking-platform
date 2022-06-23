@@ -117,7 +117,6 @@ contract TokenContract is ERC20Interface {
     function mint(uint256 _amount) external isValidVaultAddress {
         require(msg.sender == vaultAddress, 'Only Vault can call this function');
         require(_amount > 0, '_amount must be greater than 0');
-        require(totalSupply + _amount > totalSupply, 'Can not create more token (overflow)');
         _balances[msg.sender] += _amount;
         totalSupply += _amount;
 
