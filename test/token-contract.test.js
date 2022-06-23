@@ -1,20 +1,20 @@
-const { expect, use } = require('chai');
-const { waffle } = require('hardhat');
-const { deployContract, provider, solidity } = waffle;
-const { ZERO_ADDRESS, contractABI } = require('./utils');
-
-use(solidity);
+const { expect } = require('chai');
+const { ZERO_ADDRESS, contractABI, deployContract, providers } = require('./utils');
 
 const contractName = 'TokenContract';
 const TOKEN_CONTRACT_ABI = contractABI(contractName);
 
 const VAULT_ABI = contractABI('Vault');
 
+let wallet, walletTo, allowedWallet;
+
 describe(contractName, async () => {
-    before(() => {
+    before(async () => {
         console.log('------------------------------------------------------------------------------------');
         console.log('------------------------', contractName, 'Contract Test Start', '-------------------------');
         console.log('------------------------------------------------------------------------------------');
+
+        [wallet, walletTo, allowedWallet] = await providers();
     });
     // Constants
     const TOKEN_NAME = 'Niery Token Papa';
@@ -23,8 +23,6 @@ describe(contractName, async () => {
     const INITIAL_AMOUNT = 10000000;
 
     let tokenContract;
-
-    const [signer, wallet, walletTo, allowedWallet] = provider.getWallets();
 
     describe('Deployment', async () => {
         // Before execute the test suit will deploy the contract once.
@@ -202,12 +200,28 @@ describe(contractName, async () => {
                     "Tx signer is not allowed to transfer the desired amount on _from's behalf"
                 );
             });
+            it('Should revert transaction since "_from" address has insufficient allowance', async () => {
+                // 1. wallet allow allowedWallet to spend ALL tokens
+                await tokenContract.approve(allowedWallet.address, INITIAL_AMOUNT);
+
+                // 2. connect allowedWallet to the contract
+                const tokenContractAllowedWallet = tokenContract.connect(allowedWallet);
+
+                // Assert
+                await expect(tokenContractAllowedWallet.transferFrom(wallet.address, walletTo.address, INITIAL_AMOUNT + 100)).to.be.revertedWith(
+                    'Tx signer is not allowed to transfer the desired amount on _from\'s behalf'
+                );
+            });
+
             it('Should revert transaction since "_from" address has insufficient balance', async () => {
                 // 1. wallet allow allowedWallet to spend ALL tokens
                 await tokenContract.approve(allowedWallet.address, INITIAL_AMOUNT);
 
                 // 2. connect allowedWallet to the contract
                 const tokenContractAllowedWallet = tokenContract.connect(allowedWallet);
+
+                // 3. add allowance
+                await tokenContract.approve(allowedWallet.address, ethers.utils.parseEther('100'));
 
                 // Assert
                 await expect(tokenContractAllowedWallet.transferFrom(wallet.address, walletTo.address, INITIAL_AMOUNT + 100)).to.be.revertedWith(

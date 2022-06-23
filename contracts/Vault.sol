@@ -2,6 +2,7 @@
 pragma solidity 0.8.9;
 
 import 'hardhat/console.sol';
+import './Interfaces/ERC20Interface.sol';
 
 contract Vault {
     uint8 private constant decimal = 18;
@@ -35,7 +36,12 @@ contract Vault {
     /**
      * @dev address of the TokenContract
      */
-    address private tokenContractAddress;
+    ERC20Interface private tokenContract;
+
+    /**
+     * @dev Max amount of tokens bought/sold per transaction
+     */
+    uint256 private maxTokenAmount;
 
     /**
      * @dev structure to represent request withdraw details.
@@ -52,6 +58,9 @@ contract Vault {
      */
     RequestWithdrawDetails public _requestWithdrawDetails;
 
+    event Sell(address indexed _address, uint256 _value, uint256 _price);
+    event Buy(address indexed _address, uint256 _value, uint256 _price);
+
     modifier onlyAdmin() {
         require(administrators[msg.sender], 'User must be administrator to perform this operation');
         _;
@@ -67,13 +76,22 @@ contract Vault {
         _;
     }
 
+    modifier contractIsReady() {
+        require(maxTokenAmount > 0, 'Contract not ready: maxTokenAmount is 0');
+        require(sellPrice > 0, 'Contract not ready: sellPrice is 0');
+        require(buyPrice > 0, 'Contract not ready: buyPrice is 0');
+        require(address(tokenContract) != address(0), 'Contract not ready: tokenContract is 0');
+        _;
+    }
+
     constructor() payable {
         administratorsCount = 1;
         administrators[msg.sender] = true;
     }
 
-    function setTransferAccount (address _tokenContractAddress) external onlyAdmin isValidAddress(_tokenContractAddress) {
-        tokenContractAddress = _tokenContractAddress;
+    function setTransferAccount(address _tokenContractAddress) external onlyAdmin isValidAddress(_tokenContractAddress) {
+        require(isContract(_tokenContractAddress), 'The provided address is not a contract');
+        tokenContract = ERC20Interface(_tokenContractAddress);
     }
 
     function isAdmin(address _admin) external view returns (bool) {
@@ -146,9 +164,9 @@ contract Vault {
 
         uint256 _contractBalance = address(this).balance;
 
-        require(checkMaximumAmountToWithdraw(_amount), 'Amount exceeds maximum percentage');
-
         require(_contractBalance >= _amount, 'There are insufficient funds to withdraw');
+
+        require(checkMaximumAmountToWithdraw(_amount), 'Amount exceeds maximum percentage');
 
         uint256 _amountPerAdmin = _amount / administratorsCount;
 
@@ -222,5 +240,68 @@ contract Vault {
 
     function withdrawnAmount() external view onlyAdmin returns (uint256) {
         return withdrawals[msg.sender];
+    }
+
+    /**
+     * @dev The maximum amount is the max amount an address can buy per transaction
+     */
+    function setMaxAmountToTransfer(uint256 _maxAmount) external onlyAdmin {
+        require(_maxAmount > 0, 'The amount must be greater than 0');
+        maxTokenAmount = _maxAmount;
+    }
+
+    /**
+     * @dev Sell tokens to the contract
+     */
+    function exchangeEther(uint256 _tokensAmount) external onlyAdmin contractIsReady {
+        require(_tokensAmount > 0, 'The amount must be greater than 0');
+        require(tokenContract.balanceOf(msg.sender) >= _tokensAmount, "The amount must be lower than the sender's balance");
+        require(tokenContract.allowance(msg.sender, address(this)) >= _tokensAmount, 'Not enought allowance');
+        require(maxTokenAmount >= _tokensAmount, 'Contract cannot buy more than the maximum amount');
+
+        uint256 ethersToSend = _tokensAmount * buyPrice;
+        require(address(this).balance >= ethersToSend, 'Not enought liquidity');
+
+        tokenContract.transferFrom(msg.sender, address(this), _tokensAmount);
+        payable(msg.sender).transfer(ethersToSend);
+        emit Buy(msg.sender, _tokensAmount, buyPrice);
+    }
+
+    /**
+     * @dev Buy tokens from the contract
+     */
+    receive() external payable contractIsReady {
+        uint256 maxAmount = msg.value / sellPrice;
+        require(maxTokenAmount >= maxAmount, 'Contract cannot sell more than the maximum amount');
+
+        uint256 tokensToSell;
+        uint256 ethersToReturn;
+        uint256 contractBalance = tokenContract.balanceOf(address(this));
+        if (maxAmount > contractBalance) {
+            tokensToSell = contractBalance;
+            ethersToReturn = (maxAmount - contractBalance) * sellPrice;
+        } else {
+            tokensToSell = maxAmount;
+        }
+
+        tokenContract.transfer(msg.sender, tokensToSell);
+        if (ethersToReturn > 0) {
+            payable(msg.sender).transfer(ethersToReturn);
+        }
+        emit Sell(msg.sender, tokensToSell, sellPrice);
+    }
+
+    /**
+     * @dev Checks whether an address corresponds to a contract or not
+     */
+    function isContract(address addr) private view returns (bool) {
+        bytes32 accountHash = 0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470;
+
+        bytes32 codeHash;
+        assembly {
+            codeHash := extcodehash(addr)
+        }
+
+        return (codeHash != accountHash && codeHash != 0x0);
     }
 }
