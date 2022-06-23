@@ -312,12 +312,13 @@ describe(contractName, async () => {
         });
 
         describe('Reverted transactions', async () => {
-            it('Should revert transaction when method is called by an address other than the Vault address ', async () => {
+            it('Should revert transaction when function is called by an address other than the Vault address ', async () => {
                 const amount = 100;
+                await tokenContract.setVaultAddress(walletTo.address);
                 await expect(tokenContract.burn(amount,wallet.address)).to.be.revertedWith('Only Vault can call this function');
             });
 
-            it('Should revert transaction when amount is less than zero', async () => {
+            it('Should revert transaction when amount is zero', async () => {
                 await tokenContract.setVaultAddress(walletTo.address);
                 const tokenContractAllowedWallet = tokenContract.connect(walletTo);
                 const amount = 0;
@@ -331,7 +332,7 @@ describe(contractName, async () => {
                 await tokenContract1.setVaultAddress(walletTo.address);
                 const tokenContractAllowedWallet = tokenContract1.connect(walletTo);
                 const amount = 100;
-                await expect(tokenContract1.burn(amount,wallet.address)).to.be.revertedWith(
+                await expect(tokenContractAllowedWallet.burn(amount,wallet.address)).to.be.revertedWith(
                     '_amount cannot be greater than sender balance'
                 );
             });

@@ -5,7 +5,7 @@ import 'hardhat/console.sol';
 import './Interfaces/ERC20Interface.sol';
 
 contract Vault {
-    uint8 private constant decimal = 18;
+    uint8 private constant decimals = 18;
 
     uint256 public administratorsCount;
 
@@ -72,7 +72,7 @@ contract Vault {
     }
 
     modifier isValidTokenContractAddress() {
-        require(tokenContractAddress != address(0) && tokenContractAddress != address(this), 'The TokenContract address is not valid');
+        require(address(tokenContract) != address(0) && address(tokenContract) != address(this), 'The TokenContract address is not valid');
         _;
     }
 
@@ -127,14 +127,14 @@ contract Vault {
     }
 
     function burn(uint256 _amount) external {
-        require(msg.sender != tokenContractAddress, 'TokenContract cannot make this call');
+        require(!isContract(msg.sender), 'This function cannnot be called by a contract');
 
-        bytes memory methodToCall = abi.encodeWithSignature('burn(uint256,address)', _amount, msg.sender);
-        (bool _success,) = tokenContractAddress.call(methodToCall);
+        uint256 ethersToSend = buyPrice * _amount / 2;
+        bool enoughEthers = ethersToSend * 10 ** decimals <= address(this).balance;
+        require(enoughEthers, 'The amount of ethers to send must be lower or equal than the Vault balance');
 
-        if (_success == true) {
-            uint256 ethersToSend = buyPrice * _amount / 2;
-            require(ethersToSend <= address(this).balance, 'The amount of ethers to send must be lower or equal than the Vault balance');
+        bool _success = tokenContract.burn(_amount,msg.sender);
+        if (_success == true) {            
             payable(msg.sender).transfer(ethersToSend);
         }
     }
