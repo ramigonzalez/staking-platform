@@ -18,11 +18,27 @@ contract TokenContract is ERC20Interface {
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
+    address private vaultAddress;
+    
+    modifier isValidAddress(address _address) {
+        require(_address != address(0) && _address != address(this), 'The provided address is not valid');
+        _;
+    }
+
+    modifier isValidVaultAddress() {
+        require(vaultAddress != address(0) && vaultAddress != address(this), 'The Vault address is not valid');
+        _;
+    }
+
     constructor(uint256 _initialAmount) {
         require(_initialAmount > 0, 'Initial amount must be greater than zero');
         totalSupply = _initialAmount;
         _balances[address(msg.sender)] = _initialAmount;
         emit Transfer(address(0x0), address(msg.sender), _initialAmount);
+    }
+
+    function setVaultAddress (address _vaultAddress) external isValidAddress(_vaultAddress) {
+        vaultAddress = _vaultAddress;
     }
 
     function balanceOf(address _owner) external view returns (uint256) {
@@ -93,5 +109,18 @@ contract TokenContract is ERC20Interface {
      */
     function allowance(address _owner, address _spender) external view returns (uint256) {
         return _allowed[_owner][_spender];
+    }
+
+     /**
+     * @dev It mint an @param _amount from the balance of the sender 
+     */
+    function mint(uint256 _amount) external isValidVaultAddress {
+        require(msg.sender == vaultAddress, 'Only Vault can call this function');
+        require(_amount > 0, '_amount must be greater than 0');
+        require(totalSupply + _amount > totalSupply, 'Can not create more token (overflow)');
+        _balances[msg.sender] += _amount;
+        totalSupply += _amount;
+
+        emit Transfer(address(0), msg.sender, _amount);
     }
 }
