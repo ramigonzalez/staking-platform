@@ -7,7 +7,7 @@ import './Interfaces/ERC20Interface.sol';
 contract TokenContract is ERC20Interface {
     string constant public name = 'Niery Token Papa';
     string constant public symbol = 'NTP';
-    uint8 constant public decimals = 18;
+    uint8 constant private _decimals = 18;
     
     // It can be 'external' instead of 'public' but we have to check how to call an external method from another contract
     uint256 public totalSupply; 
@@ -40,6 +40,10 @@ contract TokenContract is ERC20Interface {
 
     function setVaultAddress (address _vaultAddress) external isValidAddress(_vaultAddress) {
         vaultAddress = _vaultAddress;
+    }
+
+    function decimals() external pure returns (uint8){
+        return _decimals;
     }
 
     function balanceOf(address _owner) external view returns (uint256) {

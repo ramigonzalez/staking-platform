@@ -6,6 +6,7 @@ const { ZERO_ADDRESS, contractABI, toEthers, deployContract, providers, toBigNum
 const contractName = 'Vault';
 const VAULT_ABI = contractABI(contractName);
 const TOKEN_CONTRACT_ABI = contractABI('TokenContract');
+const TEST_CONTRACT_ABI = contractABI('TestContract');
 const INITIAL_AMOUNT = 10000000;
 
 // Contract instance variable
@@ -163,34 +164,35 @@ describe(contractName, () => {
             const contractPath = 'contracts/' + contractName + '.sol:' + contractName;
             const contractFactory = await ethers.getContractFactory(contractPath, signer);
 
-            vaultContractWithEthers = await contractFactory.deploy({ value: ethers.utils.parseEther('123')});
-            await vaultContractWithEthers.setSellPrice(15);
-            await vaultContractWithEthers.setBuyPrice(10);
-            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
-            await tokenContract.setVaultAddress(vaultContractWithEthers.address);
+            vaultWithEthers = await contractFactory.deploy({ value: ethers.utils.parseEther('123')});
+            await vaultWithEthers.setSellPrice(15);
+            await vaultWithEthers.setBuyPrice(10);
+            await vaultWithEthers.deployed();
 
-            await vaultContractWithEthers.deployed();
+            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
+            await tokenContract.setVaultAddress(vaultWithEthers.address);
+
+            testContract = await deployContract(signer, TEST_CONTRACT_ABI,[vaultWithEthers.address]);
         });
 
         describe('Ok scenarios', async () => {
             it('Should burn correctly', async () => {
-                await vaultContractWithEthers.setTransferAccount(tokenContract.address);
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
                 const amount = 20;
-                await vaultContractWithEthers.burn(amount);
+                await vaultWithEthers.burn(amount);
             });
         });
 
         describe('Revert transaction', async () => {
             it('Should revert burn() transaction when function is called by a contract ', async () => {
-                const vaultConnected = vaultContractWithEthers.connect(tokenContract.address);
                 const amount = 20;
-                await expect(vaultConnected.burn(amount)).to.be.revertedWith('This function cannnot be called by a contract');
+                await expect(testContract.callToBurn(amount)).to.be.revertedWith('This function cannot be called by a contract');
             });
 
             it('Should revert burn() transaction when amount is greater than vault balance', async () => {
-                await vaultContractWithEthers.setTransferAccount(tokenContract.address);
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
                 const amount = 30;
-                await expect(vaultContractWithEthers.burn(amount)).to.be.revertedWith('The amount of ethers to send must be lower or equal than the Vault balance');
+                await expect(vaultWithEthers.burn(amount)).to.be.revertedWith('The amount of ethers to send must be lower or equal than the Vault balance');
             });
         });
     });

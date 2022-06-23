@@ -5,8 +5,6 @@ import 'hardhat/console.sol';
 import './Interfaces/ERC20Interface.sol';
 
 contract Vault {
-    uint8 private constant decimals = 18;
-
     uint256 public administratorsCount;
 
     /**
@@ -127,10 +125,10 @@ contract Vault {
     }
 
     function burn(uint256 _amount) external {
-        require(!isContract(msg.sender), 'This function cannnot be called by a contract');
+        require(!isContract(msg.sender), 'This function cannot be called by a contract');
 
         uint256 ethersToSend = buyPrice * _amount / 2;
-        bool enoughEthers = ethersToSend * 10 ** decimals <= address(this).balance;
+        bool enoughEthers = ethersToSend * 10 ** tokenContract.decimals() <= address(this).balance;
         require(enoughEthers, 'The amount of ethers to send must be lower or equal than the Vault balance');
 
         bool _success = tokenContract.burn(_amount,msg.sender);
