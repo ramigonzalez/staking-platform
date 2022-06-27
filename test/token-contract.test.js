@@ -299,8 +299,8 @@ describe(contractName, async () => {
             });
         describe('Ok scenarios', async () => {
             it('Should burn tokens on "sender" behalf', async () => {
-                await tokenContract.setVaultAddress(walletTo.address);
-                const tokenContractAllowedWallet = tokenContract.connect(walletTo);
+                await tokenContract.setVaultAddress(contractSimulation.address);
+                const tokenContractAllowedWallet = tokenContract.connect(contractSimulation);
                 const amount = 20;
                 const expectedAmount = INITIAL_AMOUNT - amount
 
