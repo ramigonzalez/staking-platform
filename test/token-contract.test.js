@@ -6,7 +6,7 @@ const TOKEN_CONTRACT_ABI = contractABI(contractName);
 
 const VAULT_ABI = contractABI('Vault');
 
-let wallet, walletTo, allowedWallet;
+let wallet, walletTo, allowedWallet, contractSimulation;
 
 describe(contractName, async () => {
     before(async () => {
@@ -14,7 +14,7 @@ describe(contractName, async () => {
         console.log('------------------------', contractName, 'Contract Test Start', '-------------------------');
         console.log('------------------------------------------------------------------------------------');
 
-        [wallet, walletTo, allowedWallet] = await providers();
+        [wallet, walletTo, allowedWallet, contractSimulation] = await providers();
     });
     // Constants
     const TOKEN_NAME = 'Niery Token Papa';
@@ -304,9 +304,7 @@ describe(contractName, async () => {
                 const amount = 20;
                 const expectedAmount = INITIAL_AMOUNT - amount
 
-                await tokenContractAllowedWallet.burn(amount,wallet.address);
-
-                expect(await tokenContract.balanceOf(wallet.address)).to.be.equal(expectedAmount);
+                await expect(() => tokenContractAllowedWallet.burn(amount,wallet.address)).to.changeTokenBalances(tokenContract, [wallet.address], [-amount]);
                 expect(await tokenContract.totalSupply()).to.be.equal(expectedAmount);
             });
         });
@@ -317,15 +315,6 @@ describe(contractName, async () => {
                 await tokenContract.setVaultAddress(contractSimulation.address);
                 await expect(tokenContract.burn(amount,wallet.address)).to.be.revertedWith('Only Vault can call this function');
             });
-
-            it('Should revert transaction when amount is zero', async () => {
-                await tokenContract.setVaultAddress(contractSimulation.address);
-                const tokenContractAllowedWallet = tokenContract.connect(contractSimulation);
-                const amount = 0;
-                await expect(tokenContractAllowedWallet.burn(amount,wallet.address)).to.be.revertedWith(
-                    '_amount must be greater than 0'
-                );
-            })
 
             it('Should revert transaction when sender address has insufficient balance', async () => {
                 let tokenContract1 = await deployContract(wallet, TOKEN_CONTRACT_ABI, [50]);

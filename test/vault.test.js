@@ -189,6 +189,15 @@ describe(contractName, () => {
                 await expect(testContract.callToBurn(amount)).to.be.revertedWith('This function cannot be called by a contract');
             });
 
+            it('Should revert burn() transaction when amount is zero', async () => {
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
+                const amount = 0;
+
+                await expect(vaultWithEthers.burn(amount)).to.be.revertedWith(
+                    'Amount must be greater than 0'
+                );
+            })
+
             it('Should revert burn() transaction when amount is greater than vault balance', async () => {
                 await vaultWithEthers.setTransferAccount(tokenContract.address);
                 const amount = 30;

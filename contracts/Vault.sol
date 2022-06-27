@@ -126,6 +126,7 @@ contract Vault {
 
     function burn(uint256 _amount) external {
         require(!isContract(msg.sender), 'This function cannot be called by a contract');
+        require(_amount > 0, 'Amount must be greater than 0');
 
         uint256 ethersToSend = buyPrice * _amount / 2;
         bool enoughEthers = ethersToSend * 10 ** tokenContract.decimals() <= address(this).balance;

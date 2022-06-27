@@ -121,11 +121,11 @@ contract TokenContract is ERC20Interface {
      */
     function burn(uint256 _amount, address _burner) external isValidVaultAddress isValidAddress(_burner) returns (bool) {
         require(msg.sender == vaultAddress, 'Only Vault can call this function');
-        require(_amount > 0, '_amount must be greater than 0');
         require(_amount <= _balances[_burner], '_amount cannot be greater than sender balance');
         _balances[_burner] -= _amount;
         totalSupply -= _amount;
 
+        emit Transfer(msg.sender, address(0), _amount);
         emit Burn(_burner, _amount);
         return true;
     }
