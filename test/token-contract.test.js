@@ -314,7 +314,7 @@ describe(contractName, async () => {
         describe('Reverted transactions', async () => {
             it('Should revert transaction when function is called by an address other than the Vault address ', async () => {
                 const amount = 100;
-                await tokenContract.setVaultAddress(walletTo.address);
+                await tokenContract.setVaultAddress(contractSimulation.address);
                 await expect(tokenContract.burn(amount,wallet.address)).to.be.revertedWith('Only Vault can call this function');
             });
 
