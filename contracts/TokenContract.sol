@@ -125,7 +125,7 @@ contract TokenContract is ERC20Interface {
         _balances[_burner] -= _amount;
         totalSupply -= _amount;
 
-        emit Transfer(msg.sender, address(0), _amount);
+        emit Transfer(_burner, address(0), _amount);
         emit Burn(_burner, _amount);
         return true;
     }
