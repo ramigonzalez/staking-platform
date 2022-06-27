@@ -319,8 +319,8 @@ describe(contractName, async () => {
             });
 
             it('Should revert transaction when amount is zero', async () => {
-                await tokenContract.setVaultAddress(walletTo.address);
-                const tokenContractAllowedWallet = tokenContract.connect(walletTo);
+                await tokenContract.setVaultAddress(contractSimulation.address);
+                const tokenContractAllowedWallet = tokenContract.connect(contractSimulation);
                 const amount = 0;
                 await expect(tokenContractAllowedWallet.burn(amount,wallet.address)).to.be.revertedWith(
                     '_amount must be greater than 0'
