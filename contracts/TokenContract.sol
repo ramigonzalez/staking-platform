@@ -17,7 +17,6 @@ contract TokenContract is ERC20Interface {
 
     event Transfer(address indexed _from, address indexed _to, uint256 _value);
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
-    event Burn(address indexed _burner, uint256 _value);
 
     address private vaultAddress;
 
@@ -126,7 +125,6 @@ contract TokenContract is ERC20Interface {
         totalSupply -= _amount;
 
         emit Transfer(_burner, address(0), _amount);
-        emit Burn(_burner, _amount);
         return true;
     }
 }

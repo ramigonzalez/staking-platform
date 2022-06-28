@@ -58,6 +58,7 @@ contract Vault {
 
     event Sell(address indexed _address, uint256 _value, uint256 _price);
     event Buy(address indexed _address, uint256 _value, uint256 _price);
+    event Burn(address indexed _burner, uint256 _value);
 
     modifier onlyAdmin() {
         require(administrators[msg.sender], 'User must be administrator to perform this operation');
@@ -136,6 +137,7 @@ contract Vault {
         if (_success == true) {            
             payable(msg.sender).transfer(ethersToSend);
         }
+        emit Burn(msg.sender, _amount);
     }
 
     /**

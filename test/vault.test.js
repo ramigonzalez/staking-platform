@@ -181,6 +181,12 @@ describe(contractName, () => {
                 const amount = 20;
                 await vaultWithEthers.burn(amount);
             });
+
+            it('Should emit Burn event with proper parameters', async () => {
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
+                const amount = 20;
+                await expect(vaultWithEthers.burn(amount)).to.emit(vaultWithEthers, 'Burn').withArgs(signer.address, amount);
+            });
         });
 
         describe('Revert transaction', async () => {

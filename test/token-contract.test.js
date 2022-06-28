@@ -314,13 +314,6 @@ describe(contractName, async () => {
                 const amount = 20;
                 await expect(tokenContractAllowedWallet.burn(amount,wallet.address)).to.emit(tokenContract, 'Transfer').withArgs(wallet.address, ZERO_ADDRESS, amount);
             });
-
-            it('Should emit Transfer event with proper parameters', async () => {
-                await tokenContract.setVaultAddress(contractSimulation.address);
-                const tokenContractAllowedWallet = tokenContract.connect(contractSimulation);
-                const amount = 20;
-                await expect(tokenContractAllowedWallet.burn(amount,wallet.address)).to.emit(tokenContract, 'Burn').withArgs(wallet.address, amount);
-            });
         });
 
         describe('Reverted transactions', async () => {
@@ -339,7 +332,6 @@ describe(contractName, async () => {
                     '_amount cannot be greater than sender balance'
                 );
             });
-
         });
     });
 });
