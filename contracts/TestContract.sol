@@ -19,6 +19,7 @@ contract TestContract {
         require(_success, getRevertMessage(_returnData));
     }
 
+    // extracted of https://ethereum.stackexchange.com/questions/83528/how-can-i-get-the-revert-reason-of-a-call-in-solidity-so-that-i-can-use-it-in-th
     function getRevertMessage(bytes memory _returnData) internal pure returns (string memory) {
         if (_returnData.length < 68) return 'Transaction reverted silently';
 
