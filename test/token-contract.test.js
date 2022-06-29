@@ -307,6 +307,15 @@ describe(contractName, async () => {
                 expect(await tokenContract.balanceOf(walletTo.address)).to.be.equal(expectedAmount);
                 expect(await tokenContract.totalSupply()).to.be.equal(INITIAL_AMOUNT + expectedAmount);
             });
+
+            it('Should emit Transfer event with proper parameters', async () => {
+                await tokenContract.setVaultAddress(walletTo.address);
+                const tokenContractAllowedWallet = tokenContract.connect(walletTo);
+                const amount = 20;
+                const expectedAmount = amount
+
+                await expect(tokenContractAllowedWallet.mint(amount)).to.emit(tokenContractAllowedWallet, 'Transfer').withArgs(ZERO_ADDRESS, walletTo.address, expectedAmount);
+            });
         });
 
         describe('Reverted transactions', async () => {
