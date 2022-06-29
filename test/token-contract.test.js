@@ -320,7 +320,6 @@ describe(contractName, async () => {
 
             it('Should revert transaction since mint is called from an address different than Vault address', async () => {
                 await tokenContract.setVaultAddress(david.address);
-                tokenContract.connect(david);
                 const amount = 30;
 
                 await expect(tokenContract.mint(amount)).to.be.revertedWith('Only Vault can call this function');
