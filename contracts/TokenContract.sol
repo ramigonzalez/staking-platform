@@ -19,7 +19,7 @@ contract TokenContract is ERC20Interface {
     event Approval(address indexed _owner, address indexed _spender, uint256 _value);
 
     address private vaultAddress;
-
+    
     modifier isValidAddress(address _address) {
         require(_address != address(0) && _address != address(this), 'The provided address is not valid');
         _;
@@ -44,6 +44,7 @@ contract TokenContract is ERC20Interface {
     function decimals() external pure returns (uint8){
         return _decimals;
     }
+
 
     function balanceOf(address _owner) external view returns (uint256) {
         return _balances[_owner];
@@ -126,5 +127,17 @@ contract TokenContract is ERC20Interface {
 
         emit Transfer(_burner, address(0), _amount);
         return true;
+    }
+
+     /**
+     * @dev It mint an @param _amount from the balance of the sender 
+     */
+    function mint(uint256 _amount) external isValidVaultAddress {
+        require(msg.sender == vaultAddress, 'Only Vault can call this function');
+        require(_amount > 0, '_amount must be greater than 0');
+        _balances[msg.sender] += _amount;
+        totalSupply += _amount;
+
+        emit Transfer(address(0), msg.sender, _amount);
     }
 }
