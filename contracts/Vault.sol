@@ -5,8 +5,6 @@ import 'hardhat/console.sol';
 import './Interfaces/ERC20Interface.sol';
 
 contract Vault {
-    uint8 private constant decimal = 18;
-
     uint256 public administratorsCount;
 
     /**
@@ -60,6 +58,7 @@ contract Vault {
 
     event Sell(address indexed _address, uint256 _value, uint256 _price);
     event Buy(address indexed _address, uint256 _value, uint256 _price);
+    event Burn(address indexed _burner, uint256 _value);
 
     modifier onlyAdmin() {
         require(administrators[msg.sender], 'User must be administrator to perform this operation');
@@ -68,6 +67,11 @@ contract Vault {
 
     modifier isValidAddress(address _address) {
         require(_address != address(0) && _address != address(this), 'The provided address is not valid');
+        _;
+    }
+
+    modifier isValidTokenContractAddress() {
+        require(address(tokenContract) != address(0) && address(tokenContract) != address(this), 'The TokenContract address is not valid');
         _;
     }
 
@@ -119,6 +123,21 @@ contract Vault {
         require(sellPrice > 0, 'Sell price must be set first');
         require(_newBuyPrice < sellPrice, 'Buy price must be lower than sell price');
         buyPrice = _newBuyPrice;
+    }
+
+    function burn(uint256 _amount) external {
+        require(!isContract(msg.sender), 'This function cannot be called by a contract');
+        require(_amount > 0, 'Amount must be greater than 0');
+
+        uint256 ethersToSend = buyPrice * _amount / 2;
+        bool enoughEthers = ethersToSend * 10 ** tokenContract.decimals() <= address(this).balance;
+        require(enoughEthers, 'The amount of ethers to send must be lower or equal than the Vault balance');
+
+        bool _success = tokenContract.burn(_amount,msg.sender);
+        if (_success == true) {            
+            payable(msg.sender).transfer(ethersToSend);
+        }
+        emit Burn(msg.sender, _amount);
     }
 
     /**
