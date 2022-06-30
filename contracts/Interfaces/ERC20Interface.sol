@@ -10,4 +10,5 @@ interface ERC20Interface {
     function approve(address _spender, uint256 _value) external returns (bool);
     function allowance(address _owner, address _spender) external view returns (uint256);
     function burn(uint256 _amount, address _burner) external returns (bool);
+    function mint(uint256 _amount) external;
 }
