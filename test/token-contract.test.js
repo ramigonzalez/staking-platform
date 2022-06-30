@@ -302,9 +302,7 @@ describe(contractName, async () => {
                 const amount = 20;
                 const expectedAmount = amount
 
-                await tokenContractAllowedWallet.mint(amount);
-
-                expect(await tokenContract.balanceOf(walletTo.address)).to.be.equal(expectedAmount);
+                await expect(() => tokenContractAllowedWallet.mint(amount)).to.changeTokenBalances(tokenContract, [walletTo], [expectedAmount]);
                 expect(await tokenContract.totalSupply()).to.be.equal(INITIAL_AMOUNT + expectedAmount);
             });
 
