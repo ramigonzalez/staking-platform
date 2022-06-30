@@ -4,7 +4,9 @@ const { ZERO_ADDRESS, contractABI, deployContract, providers } = require('./util
 const contractName = 'TokenContract';
 const TOKEN_CONTRACT_ABI = contractABI(contractName);
 
-let wallet, walletTo, allowedWallet;
+const VAULT_ABI = contractABI('Vault');
+
+let wallet, walletTo, allowedWallet, contractSimulation;
 
 describe(contractName, async () => {
     before(async () => {
@@ -12,7 +14,7 @@ describe(contractName, async () => {
         console.log('------------------------', contractName, 'Contract Test Start', '-------------------------');
         console.log('------------------------------------------------------------------------------------');
 
-        [wallet, walletTo, allowedWallet] = await providers();
+        [wallet, walletTo, allowedWallet, contractSimulation] = await providers();
     });
     // Constants
     const TOKEN_NAME = 'Niery Token Papa';
@@ -286,6 +288,49 @@ describe(contractName, async () => {
 
             it('Allowance of owner without tokens is zero', async () => {
                 expect(await tokenContract.allowance(allowedWallet.address, wallet.address)).to.be.equal(0);
+            });
+        });
+    });
+
+    describe('burn()', async () => {
+        beforeEach(async () => {
+                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
+                vaultContract = await deployContract(wallet, VAULT_ABI);
+            });
+        describe('Ok scenarios', async () => {
+            it('Should burn tokens on "sender" behalf', async () => {
+                await tokenContract.setVaultAddress(contractSimulation.address);
+                const tokenContractAllowedWallet = tokenContract.connect(contractSimulation);
+                const amount = 20;
+                const expectedAmount = INITIAL_AMOUNT - amount
+
+                await expect(() => tokenContractAllowedWallet.burn(amount,wallet.address)).to.changeTokenBalances(tokenContract, [wallet.address], [-amount]);
+                expect(await tokenContract.totalSupply()).to.be.equal(expectedAmount);
+            });
+
+            it('Should emit Transfer event with proper parameters', async () => {
+                await tokenContract.setVaultAddress(contractSimulation.address);
+                const tokenContractAllowedWallet = tokenContract.connect(contractSimulation);
+                const amount = 20;
+                await expect(tokenContractAllowedWallet.burn(amount,wallet.address)).to.emit(tokenContract, 'Transfer').withArgs(wallet.address, ZERO_ADDRESS, amount);
+            });
+        });
+
+        describe('Reverted transactions', async () => {
+            it('Should revert transaction when function is called by an address other than the Vault address ', async () => {
+                const amount = 100;
+                await tokenContract.setVaultAddress(contractSimulation.address);
+                await expect(tokenContract.burn(amount,wallet.address)).to.be.revertedWith('Only Vault can call this function');
+            });
+
+            it('Should revert transaction when sender address has insufficient balance', async () => {
+                let tokenContract1 = await deployContract(wallet, TOKEN_CONTRACT_ABI, [50]);
+                await tokenContract1.setVaultAddress(walletTo.address);
+                const tokenContractAllowedWallet = tokenContract1.connect(walletTo);
+                const amount = 100;
+                await expect(tokenContractAllowedWallet.burn(amount,wallet.address)).to.be.revertedWith(
+                    '_amount cannot be greater than sender balance'
+                );
             });
         });
     });
