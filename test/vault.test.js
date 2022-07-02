@@ -25,6 +25,49 @@ describe(contractName, () => {
         vaultContract = await deployContract(signer, VAULT_ABI);
     });
 
+    describe('mint()', async () => {
+        beforeEach(async () => {
+            // Get Contracts to deploy
+            const contractPath = 'contracts/' + contractName + '.sol:' + contractName;
+            const contractFactory = await ethers.getContractFactory(contractPath, signer);
+
+            vaultWithEthers = await contractFactory.deploy({ value: ethers.utils.parseEther('123')});
+            await vaultWithEthers.setSellPrice(15);
+            await vaultWithEthers.setBuyPrice(10);
+            await vaultWithEthers.deployed();
+
+            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
+            await tokenContract.setVaultAddress(vaultWithEthers.address);
+
+            testContract = await deployContract(signer, TEST_CONTRACT_ABI,[vaultWithEthers.address]);
+        });
+
+        describe('Ok scenarios', async () => {
+            it('Should mint correctly', async () => {
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
+                const amount = 20;
+                await vaultWithEthers.mint(amount);
+            });
+        });
+
+        describe('Revert transaction', async () => {
+            it('Should revert mint() transaction when a signer tries to sign two times', async () => {
+                const amount = 20;
+                await vaultWithEthers.mint(amount);
+                await expect(vaultWithEthers.mint(amount)).to.be.revertedWith('Signer must be different.');
+            });
+
+            it('Should revert mint() transaction when amount is zero', async () => {
+                const amount = 0;
+
+                await vaultWithEthers.mint(amount);
+                await expect(vaultWithEthers.connect(david).mint(amount)).to.be.revertedWith(
+                    '_amount must be greater than 0'
+                );
+            })
+        });
+    });
+
     describe('Admin features', async () => {
         it('Deployer is admin', async () => {
             const isAdmin = await vaultContract.isAdmin(signer.address);
