@@ -134,7 +134,7 @@ contract Vault {
         buyPrice = _newBuyPrice;
     }
 
-    function burn(uint256 _amount) external {
+    function burn(uint256 _amount) external isValidTokenContractAddress {
         require(!isContract(msg.sender), 'This function cannot be called by a contract');
         require(_amount > 0, 'Amount must be greater than 0');
 
@@ -315,7 +315,7 @@ contract Vault {
         return (codeHash != accountHash && codeHash != 0x0);
     }
 
-    function mint(uint256 _amount) external {
+    function mint(uint256 _amount) external isValidTokenContractAddress {
         if (_mint.sender == address(0)){
             _mint.sender = msg.sender;
             _mint.timestamp = block.timestamp;

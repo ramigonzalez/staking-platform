@@ -51,14 +51,21 @@ describe(contractName, () => {
         });
 
         describe('Revert transaction', async () => {
+            it('Should revert mint() transaction when a tokenContract address is not set', async () => {
+                const amount = 20;
+                await expect(vaultWithEthers.mint(amount)).to.be.revertedWith('The TokenContract address is not valid');
+            });
+
             it('Should revert mint() transaction when a signer tries to sign two times', async () => {
                 const amount = 20;
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
                 await vaultWithEthers.mint(amount);
                 await expect(vaultWithEthers.mint(amount)).to.be.revertedWith('Signer must be different.');
             });
 
             it('Should revert mint() transaction when amount is zero', async () => {
                 const amount = 0;
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
 
                 await vaultWithEthers.mint(amount);
                 await expect(vaultWithEthers.connect(david).mint(amount)).to.be.revertedWith(
@@ -233,8 +240,14 @@ describe(contractName, () => {
         });
 
         describe('Revert transaction', async () => {
+            it('Should revert burn() transaction when token contract is not set ', async () => {
+                const amount = 20;
+                await expect(testContract.callToBurn(amount)).to.be.revertedWith('The TokenContract address is not valid');
+            });
+
             it('Should revert burn() transaction when function is called by a contract ', async () => {
                 const amount = 20;
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
                 await expect(testContract.callToBurn(amount)).to.be.revertedWith('This function cannot be called by a contract');
             });
 
