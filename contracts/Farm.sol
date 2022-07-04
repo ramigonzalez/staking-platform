@@ -39,6 +39,11 @@ contract Farm {
         _;
     }
 
+    modifier isValidAddress(address _address) {
+        require(_address != address(0) && _address != address(this), 'The provided address is not valid');
+        _;
+    }
+
     /**
      * @dev Contract constructor with both TokenContract and Vault addresses
      */
@@ -49,6 +54,10 @@ contract Farm {
 
         // Push an empty value to the array so we avoid using the index 0 in the array
         stakes.push();
+    }
+
+    function setVaultAddress (address vaultAddress) external isValidAddress(vaultAddress) {
+        _vaultAddress = vaultAddress;
     }
 
     function stake(uint256 _amount) external {
@@ -158,6 +167,12 @@ contract Farm {
 
     function getAPR() external view returns (uint256) {
         return _currentAPR;
+    }
+
+    function setAPR(uint8 _value) external {
+        require(msg.sender == _vaultAddress, 'Only Vault can call this function');
+        require(_value <= 100,'APR value is invalid');
+        _currentAPR = _value;
     }
 
     function getYield(uint256 _staked, uint256 _lastChange) private view returns (uint256) {

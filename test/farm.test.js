@@ -346,4 +346,35 @@ describe(contractName, async () => {
             });
         });
     });
+
+    describe('setAPR()', async () => {
+        beforeEach(async () => {
+            const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
+            tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+            farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
+        });
+
+        describe('Ok scenarios', async () => {
+            it('setAPR() change value correctly', async () => {
+                const _value = 10;
+                await farmContract.setVaultAddress(wallet.address);
+                await farmContract.setAPR(_value);
+                expect(await farmContract.getAPR()).to.eq(_value);
+
+            });
+        });
+
+        describe('Revert transaction', async () => {
+            it('Should revert setAPR() transaction when function is called by an address other than the Vault address ', async () => {
+                const _value = 25;
+                expect(await farmContract.setAPR(_value)).to.be.revertedWith("Only Vault can call this function");
+            });
+
+            it('Should revert setAPR() transaction when APR value is invalid ', async () => {
+                const _value = 105;
+                await farmContract.setVaultAddress(wallet.address);
+                expect(await farmContract.setAPR(_value)).to.be.revertedWith("APR value is invalid");
+            });
+        });
+    });
 });

@@ -36,6 +36,11 @@ contract Vault {
      */
     ERC20Interface private tokenContract;
 
+        /**
+     * @dev address of the FarmContract
+     */
+    address private farmAddress;
+
     /**
      * @dev Max amount of tokens bought/sold per transaction
      */
@@ -91,6 +96,10 @@ contract Vault {
     function setTransferAccount(address _tokenContractAddress) external onlyAdmin isValidAddress(_tokenContractAddress) {
         require(isContract(_tokenContractAddress), 'The provided address is not a contract');
         tokenContract = ERC20Interface(_tokenContractAddress);
+    }
+
+    function setFarmAddress (address _farmAddress) external isValidAddress(_farmAddress) {
+        farmAddress = _farmAddress;
     }
 
     function isAdmin(address _admin) external view returns (bool) {
@@ -266,6 +275,13 @@ contract Vault {
         tokenContract.transferFrom(msg.sender, address(this), _tokensAmount);
         payable(msg.sender).transfer(ethersToSend);
         emit Buy(msg.sender, _tokensAmount, buyPrice);
+    }
+
+    function setAPR(uint8 _value) external onlyAdmin {
+        require(_value <= 100, 'APR value is invalid');
+
+        bytes memory  methodToCall = abi.encodeWithSignature('setAPR(uint256)', _value);
+        farmAddress.call(methodToCall);
     }
 
     /**

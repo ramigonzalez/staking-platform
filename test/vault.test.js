@@ -991,4 +991,29 @@ describe(contractName, () => {
             });
         });
     });
+
+    describe('setAPR()', async () => {
+        beforeEach(async () => {
+            vaultContract = await deployContract(signer, VAULT_ABI);
+        });
+
+        describe('Ok scenarios', async () => {
+            it('Should burn correctly', async () => {
+                const _value = 15;
+                await vaultContract.setAPR(_value);
+            });
+        });
+
+        describe('Revert transaction', async () => {
+            it('Should revert setAPR() transaction since msg.sender is not an admin', async () => {
+                const _value = 15;
+                await expect(vaultContract.connect(accountNotAdmin).setAPR(_value)).to.be.revertedWith('User must be administrator to perform this operation');
+            });
+
+            it('Should revert setAPR() transaction when APR value is invalid', async () => {
+                const _value = 105;
+                await expect(vaultContract.setAPR(_value)).to.be.revertedWith('APR value is invalid');     
+            })
+        });
+    });
 });
