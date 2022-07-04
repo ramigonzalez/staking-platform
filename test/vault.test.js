@@ -1,6 +1,6 @@
 const { expect } = require('chai');
 const { ethers } = require('hardhat');
-const { ZERO_ADDRESS, contractABI, toEthers, deployContract, providers, toBigNumber } = require('./utils');
+const { ZERO_ADDRESS, contractABI, toEthers, deployContract, providers, increaseTime } = require('./utils');
 
 // Constant
 const contractName = 'Vault';
@@ -43,10 +43,39 @@ describe(contractName, () => {
         });
 
         describe('Ok scenarios', async () => {
-            it('Should mint correctly', async () => {
+            it('Should create mint request correctly', async () => {
                 await vaultWithEthers.setTransferAccount(tokenContract.address);
                 const amount = 20;
+                await expect(() => vaultWithEthers.mint(amount)).to.changeTokenBalances(tokenContract, [vaultWithEthers.address], [0]);
+            });
+
+            it('Should create change balance when approved', async () => {
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
+                const amount = 20;
+
+                await vaultWithEthers.addAdmin(david.address);
                 await vaultWithEthers.mint(amount);
+                await expect(() => vaultWithEthers.connect(david).mint(amount)).to.changeTokenBalances(tokenContract, [vaultWithEthers.address], [amount]);
+            });
+
+            it('Should not create more tokens if approved again', async () => {
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
+                const amount = 20;
+
+                await vaultWithEthers.addAdmin(david.address);
+                await vaultWithEthers.mint(amount);
+                await vaultWithEthers.connect(david).mint(amount)
+                await expect(() => vaultWithEthers.connect(david).mint(amount)).to.changeTokenBalances(tokenContract, [vaultWithEthers.address], [0]);
+            });
+
+            it('Should not create more tokens if mint time expired', async () => {
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
+                const amount = 20;
+
+                await vaultWithEthers.addAdmin(david.address);
+                await vaultWithEthers.mint(amount);
+                await increaseTime(network, 6 * 60);
+                await expect(() => vaultWithEthers.connect(david).mint(amount)).to.changeTokenBalances(tokenContract, [vaultWithEthers.address], [0]);
             });
         });
 
@@ -63,9 +92,20 @@ describe(contractName, () => {
                 await expect(vaultWithEthers.mint(amount)).to.be.revertedWith('Signer must be different.');
             });
 
+            it('Should revert mint() transaction if signer is not an admin', async () => {
+                const amount = 0;
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
+
+                await vaultWithEthers.mint(amount);
+                await expect(vaultWithEthers.connect(david).mint(amount)).to.be.revertedWith(
+                    'User must be administrator to perform this operation'
+                );
+            })
+
             it('Should revert mint() transaction when amount is zero', async () => {
                 const amount = 0;
                 await vaultWithEthers.setTransferAccount(tokenContract.address);
+                await vaultWithEthers.addAdmin(david.address);
 
                 await vaultWithEthers.mint(amount);
                 await expect(vaultWithEthers.connect(david).mint(amount)).to.be.revertedWith(
