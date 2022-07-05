@@ -367,13 +367,13 @@ describe(contractName, async () => {
         describe('Revert transaction', async () => {
             it('Should revert setAPR() transaction when function is called by an address other than the Vault address ', async () => {
                 const _value = 25;
-                expect(await farmContract.setAPR(_value)).to.be.revertedWith("Only Vault can call this function");
+                await expect(farmContract.setAPR(_value)).to.be.revertedWith("Only Vault can call this function");
             });
 
             it('Should revert setAPR() transaction when APR value is invalid ', async () => {
                 const _value = 105;
                 await farmContract.setVaultAddress(wallet.address);
-                expect(await farmContract.setAPR(_value)).to.be.revertedWith("APR value is invalid");
+                await expect(farmContract.setAPR(_value)).to.be.revertedWith("APR value is invalid");
             });
         });
     });
