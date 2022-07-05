@@ -60,11 +60,6 @@ El proyecto esta estructurado de la siguiente forma:
 | `.hardhat.config` | Archivo de configuraciones de hardhat |
 | `.package.json`   | Dependencias de node |
 
-## Address de contratos deployados en la testnet
-- Farm          =>
-- TokenContract =>
-- Vault         =>
-
 ## Integrantes del equipo, email, numero de estudiante y address registrada
 
 | Integrantes | Email | Numero de estudiante | Github user | Address |
@@ -84,3 +79,11 @@ El proyecto esta estructurado de la siguiente forma:
 | Gitflow | Es un modelo de trabajo colaborativo que organiza el manejo de ramas en Git, clasificando las tareas (features), resolución de bugs (bugfix), correcciones urgentes (hotfix) y liberaciones (release), y ordenando el proceso para incorporarse al código fuente principal. En nuestro caso utilizamos las ramas master, develop y feature/tarea-a-desarrollar. |
 | Board | Se definió un board para organizar el trabajo a realizar, el mismo se encuentra disponible en el [proyecto definido dentro del repositorio](https://github.com/orgs/Tecnologias-Blockchain-y-Contratos-Inte/projects/1) en GitHub.| 
 | Weekly Meetings| Se organizaron reuniones semanales para coordinar el trabajo realizado y definir los próximos pasos a seguir. También se utilizó este espacio para resolver problemas entre todos los integrantes del equipo. |
+
+
+## Address de contratos deployados en la testnet
+| Contract Name | Contract Address |
+| ------------- | ------------- |
+| Vault | <address> |
+| TokenContract | <address> |
+| Farm | <address> |
