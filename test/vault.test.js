@@ -255,8 +255,8 @@ describe(contractName, () => {
             const contractFactory = await ethers.getContractFactory(contractPath, signer);
 
             vaultWithEthers = await contractFactory.deploy({ value: ethers.utils.parseEther('123')});
-            await vaultWithEthers.setSellPrice(15);
-            await vaultWithEthers.setBuyPrice(10);
+            await vaultWithEthers.setSellPrice(ethers.utils.parseEther('15'));
+            await vaultWithEthers.setBuyPrice(ethers.utils.parseEther('10'));
             await vaultWithEthers.deployed();
 
             tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, vaultWithEthers.address]);
@@ -265,6 +265,11 @@ describe(contractName, () => {
         });
 
         describe('Ok scenarios', async () => {
+            // beforeEach(async () => {
+            //     await vaultWithEthers.setSellPrice(15);
+            //     await vaultWithEthers.setBuyPrice(10);
+            // })
+
             it('Should burn correctly', async () => {
                 await vaultWithEthers.setTransferAccount(tokenContract.address);
                 const amount = 20;
@@ -275,6 +280,18 @@ describe(contractName, () => {
                 await vaultWithEthers.setTransferAccount(tokenContract.address);
                 const amount = 20;
                 await expect(vaultWithEthers.burn(amount)).to.emit(vaultWithEthers, 'Burn').withArgs(signer.address, amount);
+            });
+
+            it('Should change token balances', async () => {
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
+                const amount = 20;
+                await expect(vaultWithEthers.burn(amount)).to.changeTokenBalances(tokenContract, [signer], [-amount]);
+            });
+
+            it('Should change account balances', async () => {
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
+                const amount = 20;
+                await expect(vaultWithEthers.burn(amount)).to.changeEtherBalances([signer], [100]);
             });
         });
 
@@ -301,7 +318,7 @@ describe(contractName, () => {
 
             it('Should revert burn() transaction when amount is greater than vault balance', async () => {
                 await vaultWithEthers.setTransferAccount(tokenContract.address);
-                const amount = 30;
+                const amount = ethers.utils.parseEther('30');
                 await expect(vaultWithEthers.burn(amount)).to.be.revertedWith('The amount of ethers to send must be lower or equal than the Vault balance');
             });
         });
@@ -980,8 +997,10 @@ describe(contractName, () => {
                 await tokenContract.transfer(account1.address, 100);
                 await tokenContract.connect(account1).approve(vaultContract.address, 1000);
 
-                await expect(await vaultContract.connect(account1).exchangeEther(5))
-                    .to.changeEtherBalances([account1, vaultContract], [ethers.utils.parseEther('5'), ethers.utils.parseEther('-5')]);
+                const amount = 5
+                const expected = amount * ethers.utils.parseEther('1') / (10 ** await tokenContract.decimals())
+                await expect(await vaultContract.connect(account1).exchangeEther(amount))
+                    .to.changeEtherBalances([account1, vaultContract], [expected, -expected]);
             });
 
             it('Should transfer all the tokens', async () => {
@@ -1085,8 +1104,8 @@ describe(contractName, () => {
 
             it('Should revert if contract doen\'t have liquidity to pay', async () => {
                 await vaultContract.setMaxAmountToTransfer(ethers.utils.parseEther('10000'));
-                await vaultContract.setSellPrice(100);
-                await vaultContract.setBuyPrice(50);
+                await vaultContract.setSellPrice(ethers.utils.parseEther('100'));
+                await vaultContract.setBuyPrice(ethers.utils.parseEther('50'));
                 await vaultContract.setTransferAccount(tokenContract.address);
                 await vaultContract.setFarmAddress(dummyFarm.address);
 

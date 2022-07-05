@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.9;
 
-import 'hardhat/console.sol';
 import './Interfaces/ERC20Interface.sol';
 
 contract Vault {
@@ -148,8 +147,8 @@ contract Vault {
         require(!isContract(msg.sender), 'This function cannot be called by a contract');
         require(_amount > 0, 'Amount must be greater than 0');
 
-        uint256 ethersToSend = buyPrice * _amount / 2;
-        bool enoughEthers = ethersToSend * 10 ** tokenContract.decimals() <= address(this).balance;
+        uint256 ethersToSend = buyPrice * _amount / (2 * (10 ** tokenContract.decimals()));
+        bool enoughEthers = ethersToSend <= address(this).balance;
         require(enoughEthers, 'The amount of ethers to send must be lower or equal than the Vault balance');
 
         bool _success = tokenContract.burn(_amount,msg.sender);
@@ -279,7 +278,7 @@ contract Vault {
         require(tokenContract.allowance(msg.sender, address(this)) >= _tokensAmount, 'Not enought allowance');
         require(maxTokenAmount >= _tokensAmount, 'Contract cannot buy more than the maximum amount');
 
-        uint256 ethersToSend = _tokensAmount * buyPrice;
+        uint256 ethersToSend = _tokensAmount * buyPrice / (10 ** tokenContract.decimals());
         require(address(this).balance >= ethersToSend, 'Not enought liquidity');
 
         tokenContract.transferFrom(msg.sender, address(this), _tokensAmount);
