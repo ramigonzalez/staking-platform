@@ -26,7 +26,7 @@ describe(contractName, async () => {
         before(async () => {
             const vaultContract = await deployContract(wallet, contractABI('Vault'));
 
-            tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+            tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
 
             farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
         });
@@ -51,7 +51,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -69,7 +69,7 @@ describe(contractName, async () => {
         describe('Reverted transactions', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -98,7 +98,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -118,7 +118,7 @@ describe(contractName, async () => {
         describe('Reverted transactions', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -147,7 +147,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -172,7 +172,7 @@ describe(contractName, async () => {
         describe('Reverted transactions', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -190,7 +190,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -233,7 +233,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -259,7 +259,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -306,7 +306,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -351,7 +351,7 @@ describe(contractName, async () => {
     describe('setAPR()', async () => {
         beforeEach(async () => {
             vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-            tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+            tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
         });
 
         describe('Ok scenarios', async () => {

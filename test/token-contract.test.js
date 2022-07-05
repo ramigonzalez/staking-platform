@@ -6,7 +6,7 @@ const TOKEN_CONTRACT_ABI = contractABI(contractName);
 
 const VAULT_ABI = contractABI('Vault');
 
-let wallet, walletTo, allowedWallet, contractSimulation, david;
+let wallet, walletTo, allowedWallet, contractSimulation, david, dummyVault;
 
 describe(contractName, async () => {
     before(async () => {
@@ -14,7 +14,7 @@ describe(contractName, async () => {
         console.log('------------------------', contractName, 'Contract Test Start', '-------------------------');
         console.log('------------------------------------------------------------------------------------');
 
-        [wallet, walletTo, allowedWallet, contractSimulation, david] = await providers();
+        [wallet, walletTo, allowedWallet, contractSimulation, david, dummyVault] = await providers();
     });
     // Constants
     const TOKEN_NAME = 'Niery Token Papa';
@@ -27,7 +27,7 @@ describe(contractName, async () => {
     describe('Deployment', async () => {
         // Before execute the test suit will deploy the contract once.
         before(async () => {
-            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
+            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, dummyVault.address]);
         });
 
         it(`Token name should be: "${TOKEN_NAME}"`, async () => {
@@ -53,12 +53,12 @@ describe(contractName, async () => {
 
     describe('constructor()', async () => {
         beforeEach(async () => {
-            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
+            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, dummyVault.address]);
         });
 
         it('Should revert with initial amount less than zero', async () => {
             const initialAmount = 0;
-            await expect(deployContract(wallet, TOKEN_CONTRACT_ABI, [initialAmount])).to.be.revertedWith('Initial amount must be greater than zero');
+            await expect(deployContract(wallet, TOKEN_CONTRACT_ABI, [initialAmount, dummyVault.address])).to.be.revertedWith('Initial amount must be greater than zero');
         });
 
         it('Should assign initial amount to the transation signer', async () => {
@@ -95,7 +95,7 @@ describe(contractName, async () => {
     describe('transfer()', async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
-                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, dummyVault.address]);
             });
 
             it('Should transfer requested amount and modify both balances', async () => {
@@ -113,7 +113,7 @@ describe(contractName, async () => {
 
         describe('Reverted transactions', async () => {
             beforeEach(async () => {
-                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, dummyVault.address]);
             });
 
             it('Should revert transactions since "_to" is ZERO_ADDRESS', async () => {
@@ -131,7 +131,7 @@ describe(contractName, async () => {
     describe('transferFrom()', async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
-                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, dummyVault.address]);
             });
 
             it('Should transfer tokens on "_from" behalf', async () => {
@@ -172,7 +172,7 @@ describe(contractName, async () => {
 
         describe('Reverted transactions', async () => {
             beforeEach(async () => {
-                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, dummyVault.address]);
             });
 
             it('Should revert transaction since "_from" cannot be zero address', async () => {
@@ -233,7 +233,7 @@ describe(contractName, async () => {
 
     describe('approve()', async () => {
         beforeEach(async () => {
-            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
+            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, dummyVault.address]);
         });
 
         describe('Ok scenarios', async () => {
@@ -258,7 +258,7 @@ describe(contractName, async () => {
 
     describe('balanceOf()', async () => {
         beforeEach(async () => {
-            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
+            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, dummyVault.address]);
         });
 
         describe('Ok scenarios', async () => {
@@ -274,7 +274,7 @@ describe(contractName, async () => {
 
     describe('allowance()', async () => {
         beforeEach(async () => {
-            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
+            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, dummyVault.address]);
         });
 
         describe('Ok scenarios', async () => {
@@ -294,41 +294,33 @@ describe(contractName, async () => {
 
     describe('burn()', async () => {
         beforeEach(async () => {
-                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
-                vaultContract = await deployContract(wallet, VAULT_ABI);
+                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, wallet.address]);
             });
         describe('Ok scenarios', async () => {
             it('Should burn tokens on "sender" behalf', async () => {
-                await tokenContract.setVaultAddress(contractSimulation.address);
-                const tokenContractAllowedWallet = tokenContract.connect(contractSimulation);
                 const amount = 20;
                 const expectedAmount = INITIAL_AMOUNT - amount
 
-                await expect(() => tokenContractAllowedWallet.burn(amount,wallet.address)).to.changeTokenBalances(tokenContract, [wallet.address], [-amount]);
+                await expect(() => tokenContract.burn(amount,wallet.address)).to.changeTokenBalances(tokenContract, [wallet.address], [-amount]);
                 expect(await tokenContract.totalSupply()).to.be.equal(expectedAmount);
             });
 
             it('Should emit Transfer event with proper parameters', async () => {
-                await tokenContract.setVaultAddress(contractSimulation.address);
-                const tokenContractAllowedWallet = tokenContract.connect(contractSimulation);
                 const amount = 20;
-                await expect(tokenContractAllowedWallet.burn(amount,wallet.address)).to.emit(tokenContract, 'Transfer').withArgs(wallet.address, ZERO_ADDRESS, amount);
+                await expect(tokenContract.burn(amount,wallet.address)).to.emit(tokenContract, 'Transfer').withArgs(wallet.address, ZERO_ADDRESS, amount);
             });
         });
 
         describe('Reverted transactions', async () => {
             it('Should revert transaction when function is called by an address other than the Vault address ', async () => {
                 const amount = 100;
-                await tokenContract.setVaultAddress(contractSimulation.address);
-                await expect(tokenContract.burn(amount,wallet.address)).to.be.revertedWith('Only Vault can call this function');
+                await expect(tokenContract.connect(walletTo).burn(amount,wallet.address)).to.be.revertedWith('Only Vault can call this function');
             });
 
             it('Should revert transaction when sender address has insufficient balance', async () => {
-                let tokenContract1 = await deployContract(wallet, TOKEN_CONTRACT_ABI, [50]);
-                await tokenContract1.setVaultAddress(walletTo.address);
-                const tokenContractAllowedWallet = tokenContract1.connect(walletTo);
+                let tokenContract1 = await deployContract(wallet, TOKEN_CONTRACT_ABI, [50, wallet.address]);
                 const amount = 100;
-                await expect(tokenContractAllowedWallet.burn(amount,wallet.address)).to.be.revertedWith(
+                await expect(tokenContract1.burn(amount,wallet.address)).to.be.revertedWith(
                     '_amount cannot be greater than sender balance'
                 );
             });
@@ -337,44 +329,37 @@ describe(contractName, async () => {
 
     describe('mint()', async () => {
         beforeEach(async () => {
-                tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
-            });
+            tokenContract = await deployContract(wallet, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, wallet.address]);
+        });
 
         describe('Ok scenarios', async () => {
             it('Should mint tokens on "vault" behalf', async () => {
-                await tokenContract.setVaultAddress(walletTo.address);
-                const tokenContractAllowedWallet = tokenContract.connect(walletTo);
                 const amount = 20;
                 const expectedAmount = amount
 
-                await expect(() => tokenContractAllowedWallet.mint(amount)).to.changeTokenBalances(tokenContract, [walletTo], [expectedAmount]);
+                await expect(() => tokenContract.mint(amount)).to.changeTokenBalances(tokenContract, [wallet], [expectedAmount]);
                 expect(await tokenContract.totalSupply()).to.be.equal(INITIAL_AMOUNT + expectedAmount);
             });
 
             it('Should emit Transfer event with proper parameters', async () => {
-                await tokenContract.setVaultAddress(walletTo.address);
-                const tokenContractAllowedWallet = tokenContract.connect(walletTo);
                 const amount = 20;
                 const expectedAmount = amount
 
-                await expect(tokenContractAllowedWallet.mint(amount)).to.emit(tokenContractAllowedWallet, 'Transfer').withArgs(ZERO_ADDRESS, walletTo.address, expectedAmount);
+                await expect(tokenContract.mint(amount)).to.emit(tokenContract, 'Transfer').withArgs(ZERO_ADDRESS, wallet.address, expectedAmount);
             });
         });
 
         describe('Reverted transactions', async () => {
             it('Should revert transaction since "_amount" cannot be zero', async () => {
-                await tokenContract.setVaultAddress(walletTo.address);
-                const tokenContractAllowedWallet = tokenContract.connect(walletTo);
                 const amount = 0;
 
-                await expect(tokenContractAllowedWallet.mint(amount)).to.be.revertedWith('_amount must be greater than 0');
+                await expect(tokenContract.mint(amount)).to.be.revertedWith('_amount must be greater than 0');
             });
 
             it('Should revert transaction since mint is called from an address different than Vault address', async () => {
-                await tokenContract.setVaultAddress(david.address);
                 const amount = 30;
 
-                await expect(tokenContract.mint(amount)).to.be.revertedWith('Only Vault can call this function');
+                await expect(tokenContract.connect(walletTo).mint(amount)).to.be.revertedWith('Only Vault can call this function');
             });
         });
     });

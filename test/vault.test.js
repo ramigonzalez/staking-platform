@@ -7,10 +7,11 @@ const contractName = 'Vault';
 const VAULT_ABI = contractABI(contractName);
 const TOKEN_CONTRACT_ABI = contractABI('TokenContract');
 const TEST_CONTRACT_ABI = contractABI('TestContract');
+const FARM_CONTRACT_ABI = contractABI('Farm');
 const INITIAL_AMOUNT = 10000000;
 
 // Contract instance variable
-let signer, account1, account2, account3, account4, accountNotAdmin, vaultContract, david;
+let signer, account1, account2, account3, account4, accountNotAdmin, vaultContract, david, dummyFarm;
 
 describe(contractName, () => {
     before(async () => {
@@ -19,7 +20,7 @@ describe(contractName, () => {
         console.log('------------------------------------------------------------------------------------');
 
         // Get signers
-        [signer, account1, account2, account3, account4, accountNotAdmin, david] = await providers();
+        [signer, account1, account2, account3, account4, accountNotAdmin, david, dummyFarm] = await providers();
 
         // Deploy contract
         vaultContract = await deployContract(signer, VAULT_ABI);
@@ -36,8 +37,7 @@ describe(contractName, () => {
             await vaultWithEthers.setBuyPrice(10);
             await vaultWithEthers.deployed();
 
-            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
-            await tokenContract.setVaultAddress(vaultWithEthers.address);
+            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, vaultWithEthers.address]);
 
             testContract = await deployContract(signer, TEST_CONTRACT_ABI,[vaultWithEthers.address]);
         });
@@ -259,8 +259,7 @@ describe(contractName, () => {
             await vaultWithEthers.setBuyPrice(10);
             await vaultWithEthers.deployed();
 
-            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
-            await tokenContract.setVaultAddress(vaultWithEthers.address);
+            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT, vaultWithEthers.address]);
 
             testContract = await deployContract(signer, TEST_CONTRACT_ABI,[vaultWithEthers.address]);
         });
@@ -803,7 +802,7 @@ describe(contractName, () => {
         let tokenContract;
         beforeEach(async () => {
             vaultContract = await deployContract(signer, VAULT_ABI);
-            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [1]);
+            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [1, vaultContract.address]);
         });
 
         describe('Ok scenarios', async () => {
@@ -851,7 +850,7 @@ describe(contractName, () => {
         let tokenContract;
         beforeEach(async () => {
             vaultContract = await deployContract(signer, VAULT_ABI);
-            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [1000]);
+            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [1000, vaultContract.address]);
         });
 
         describe('Ok scenarios', async () => {
@@ -860,6 +859,7 @@ describe(contractName, () => {
                 await vaultContract.setSellPrice(ethers.utils.parseEther('2'));
                 await vaultContract.setBuyPrice(ethers.utils.parseEther('1'));
                 await vaultContract.setTransferAccount(tokenContract.address);
+                await vaultContract.setFarmAddress(dummyFarm.address);
 
                 // Give tokens to the contract
                 await tokenContract.transfer(vaultContract.address, 2);
@@ -875,6 +875,7 @@ describe(contractName, () => {
                 await vaultContract.setSellPrice(ethers.utils.parseEther('2'));
                 await vaultContract.setBuyPrice(ethers.utils.parseEther('1'));
                 await vaultContract.setTransferAccount(tokenContract.address);
+                await vaultContract.setFarmAddress(dummyFarm.address);
 
                 // Give tokens to the contract
                 await tokenContract.transfer(vaultContract.address, 10);
@@ -890,6 +891,7 @@ describe(contractName, () => {
                 await vaultContract.setSellPrice(ethers.utils.parseEther('2'));
                 await vaultContract.setBuyPrice(ethers.utils.parseEther('1'));
                 await vaultContract.setTransferAccount(tokenContract.address);
+                await vaultContract.setFarmAddress(dummyFarm.address);
 
                 // Give tokens to the contract
                 await tokenContract.transfer(vaultContract.address, 10);
@@ -944,6 +946,7 @@ describe(contractName, () => {
                 await vaultContract.setSellPrice(2);
                 await vaultContract.setBuyPrice(1);
                 await vaultContract.setTransferAccount(tokenContract.address);
+                await vaultContract.setFarmAddress(dummyFarm.address);
 
                 await expect(account1.sendTransaction({
                     to: vaultContract.address,
@@ -963,7 +966,7 @@ describe(contractName, () => {
 
             await vaultContract.deployed();
 
-            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [ethers.utils.parseEther('1000')]);
+            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [ethers.utils.parseEther('1000'), vaultContract.address]);
         });
 
         describe('Ok scenarios', async () => {
@@ -972,6 +975,7 @@ describe(contractName, () => {
                 await vaultContract.setSellPrice(ethers.utils.parseEther('2'));
                 await vaultContract.setBuyPrice(ethers.utils.parseEther('1'));
                 await vaultContract.setTransferAccount(tokenContract.address);
+                await vaultContract.setFarmAddress(dummyFarm.address);
 
                 await tokenContract.transfer(account1.address, 100);
                 await tokenContract.connect(account1).approve(vaultContract.address, 1000);
@@ -985,6 +989,7 @@ describe(contractName, () => {
                 await vaultContract.setSellPrice(ethers.utils.parseEther('2'));
                 await vaultContract.setBuyPrice(ethers.utils.parseEther('1'));
                 await vaultContract.setTransferAccount(tokenContract.address);
+                await vaultContract.setFarmAddress(dummyFarm.address);
 
                 await tokenContract.transfer(account1.address, 100);
                 await tokenContract.connect(account1).approve(vaultContract.address, 1000);
@@ -998,6 +1003,7 @@ describe(contractName, () => {
                 await vaultContract.setSellPrice(ethers.utils.parseEther('2'));
                 await vaultContract.setBuyPrice(ethers.utils.parseEther('1'));
                 await vaultContract.setTransferAccount(tokenContract.address);
+                await vaultContract.setFarmAddress(dummyFarm.address);
 
                 await tokenContract.transfer(account1.address, 100);
                 await tokenContract.connect(account1).approve(vaultContract.address, 1000);
@@ -1037,6 +1043,7 @@ describe(contractName, () => {
                 await vaultContract.setSellPrice(2);
                 await vaultContract.setBuyPrice(1);
                 await vaultContract.setTransferAccount(tokenContract.address);
+                await vaultContract.setFarmAddress(dummyFarm.address);
 
                 await expect(vaultContract.connect(account1).exchangeEther(0)).to.be.revertedWith('The amount must be greater than 0');
             });
@@ -1046,6 +1053,7 @@ describe(contractName, () => {
                 await vaultContract.setSellPrice(2);
                 await vaultContract.setBuyPrice(1);
                 await vaultContract.setTransferAccount(tokenContract.address);
+                await vaultContract.setFarmAddress(dummyFarm.address);
 
                 await expect(vaultContract.connect(account1).exchangeEther(1)).to.be.revertedWith('The amount must be lower than the sender\'s balance');
             });
@@ -1055,6 +1063,7 @@ describe(contractName, () => {
                 await vaultContract.setSellPrice(2);
                 await vaultContract.setBuyPrice(1);
                 await vaultContract.setTransferAccount(tokenContract.address);
+                await vaultContract.setFarmAddress(dummyFarm.address);
 
                 await tokenContract.transfer(account1.address, 100);
 
@@ -1066,6 +1075,7 @@ describe(contractName, () => {
                 await vaultContract.setSellPrice(2);
                 await vaultContract.setBuyPrice(1);
                 await vaultContract.setTransferAccount(tokenContract.address);
+                await vaultContract.setFarmAddress(dummyFarm.address);
 
                 await tokenContract.transfer(account1.address, 100);
                 await tokenContract.connect(account1).approve(vaultContract.address, 1000);
@@ -1078,6 +1088,7 @@ describe(contractName, () => {
                 await vaultContract.setSellPrice(100);
                 await vaultContract.setBuyPrice(50);
                 await vaultContract.setTransferAccount(tokenContract.address);
+                await vaultContract.setFarmAddress(dummyFarm.address);
 
                 const amountToChange = ethers.utils.parseEther('1000');
                 await tokenContract.transfer(account1.address, amountToChange);
@@ -1089,13 +1100,18 @@ describe(contractName, () => {
     });
 
     describe('setAPR()', async () => {
+        let farmContract;
         beforeEach(async () => {
             vaultContract = await deployContract(signer, VAULT_ABI);
+
+            tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [ethers.utils.parseEther('1000'), vaultContract.address]);
+            farmContract = await deployContract(signer, FARM_CONTRACT_ABI, [tokenContract.address, vaultContract.address]);
         });
 
         describe('Ok scenarios', async () => {
-            it('Should burn correctly', async () => {
+            it('Should set APR correctly', async () => {
                 const _value = 15;
+                await vaultContract.setFarmAddress(farmContract.address);
                 await vaultContract.setAPR(_value);
             });
         });
