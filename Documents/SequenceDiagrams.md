@@ -137,29 +137,3 @@ else APR value valid
 end
 deactivate Vault
 ```
-
-## Change APR2
-```mermaid
-sequenceDiagram
-Wallet 1->>Vault: setAPR(apr)
-activate Vault
-alt Sender is not Admin
-    Vault-->>Wallet 1: Not An Admin!!
-else Sender is Admin
-    alt No previous request
-        Vault-->>Wallet 1: Request Created
-    else Equals previous request
-        Vault->>Farm: setAPR(apr)
-        activate Farm
-        loop Each AccountStake
-            Farm->>AccountStake: getYield()
-            Farm->>AccountStake: updateStoredYield()
-        end
-        Farm->>Farm: setNewAPR(apr)
-        Farm-->>Vault: success
-        deactivate Farm
-        Vault-->>Wallet 1: success
-    end
-end
-deactivate Vault
-```
