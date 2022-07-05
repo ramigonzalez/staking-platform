@@ -74,10 +74,25 @@ async function main() {
 
     console.log('');
     console.log('---------------------------------------------------------------------------------------');
-    console.log('-- Set sell price:\t', await vaultContract.setSellPrice(toEthers(2)));
-    console.log('-- Set buy price:\t', await vaultContract.setBuyPrice(toEthers(1)));
-    console.log('-- Set transfer account (tokenContract):\t', await vaultContract.setTransferAccount(tokenContract.address));
-    console.log('-- Set buy price:\t', await vaultContract.setFarmAddress(farmContract.address));
+    console.log('-- Protocol setup variables');
+
+    let tx;
+    console.log('-- Set sell price:\t', 2 * 10 ** 18);
+    tx = await vaultContract.setSellPrice(toEthers(2));
+    await tx.wait();
+
+    console.log('-- Set buy price:\t', 1 * 10 ** 18);
+    tx = await vaultContract.setBuyPrice(toEthers(1));
+    await tx.wait();
+
+    console.log('-- Set transfer account (tokenContract):\t', tokenContract.address);
+    tx = await vaultContract.setTransferAccount(tokenContract.address);
+    await tx.wait();
+
+    console.log('-- Set farm address:\t', farmContract.address);
+    tx = await vaultContract.setFarmAddress(farmContract.address);
+    await tx.wait();
+
     console.log('---------------------------------------------------------------------------------------');
 
     console.log('');
