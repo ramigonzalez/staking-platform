@@ -82,8 +82,8 @@ El proyecto esta estructurado de la siguiente forma:
 
 
 ## Address de contratos deployados en la testnet
-| Contract Name | Contract Address |
-| ------------- | ------------- |
-| Vault | <address> |
-| TokenContract | <address> |
-| Farm | <address> |
+| Contract Name     | Contract Address |
+| -------------:   | :-------------: |
+| Vault             | 0xcc2f903fdcd8E80fD10A8DC78Ed514D33FCe2890 |
+| TokenContract     | 0xfA5961059ee3A1BB97422d13D67477cFe749b40a |
+| Farm              | 0x11372880359CA12A126119FC96a6338879bb2a1d |
