@@ -56,10 +56,6 @@ contract Farm {
         stakes.push();
     }
 
-    function setVaultAddress (address vaultAddress) external isValidAddress(vaultAddress) {
-        _vaultAddress = vaultAddress;
-    }
-
     function stake(uint256 _amount) external {
         require(_amount > 0, 'Cannot stake nothing');
         // In token contract must exists a record that indicates that Farm.sol (contract) is allowed to spend certain value (_amount) on user's (msg.sender) behalf.
