@@ -138,7 +138,8 @@ contract Vault {
         require(!isContract(msg.sender), 'This function cannot be called by a contract');
         require(_amount > 0, 'Amount must be greater than 0');
 
-        uint256 ethersToSend = buyPrice * (_amount / (10 ** tokenContract.decimals())) / 2;
+        // console.log('Trying to burn: ',  )
+        uint256 ethersToSend = buyPrice * _amount / (2 * (10 ** tokenContract.decimals()));
         bool enoughEthers = ethersToSend <= address(this).balance;
         require(enoughEthers, 'The amount of ethers to send must be lower or equal than the Vault balance');
 
@@ -281,8 +282,7 @@ contract Vault {
      * @dev Buy tokens from the contract
      */
     receive() external payable contractIsReady {
-        uint256 maxAmount = msg.value / (sellPrice * (10 ** tokenContract.decimals()));
-        console.log('MaxAmout: ' + maxAmount);
+        uint256 maxAmount = msg.value / sellPrice;
         require(maxTokenAmount >= maxAmount, 'Contract cannot sell more than the maximum amount');
 
         uint256 tokensToSell;
@@ -290,7 +290,7 @@ contract Vault {
         uint256 contractBalance = tokenContract.balanceOf(address(this));
         if (maxAmount > contractBalance) {
             tokensToSell = contractBalance;
-            ethersToReturn = (maxAmount - contractBalance) * (sellPrice * (10 ** tokenContract.decimals())) ;
+            ethersToReturn = (maxAmount - contractBalance) * sellPrice;
         } else {
             tokensToSell = maxAmount;
         }

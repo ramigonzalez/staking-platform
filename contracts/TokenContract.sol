@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity 0.8.9;
 
-import 'hardhat/console.sol';
 import './Interfaces/ERC20Interface.sol';
 
 contract TokenContract is ERC20Interface {

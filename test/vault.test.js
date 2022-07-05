@@ -255,8 +255,8 @@ describe(contractName, () => {
             const contractFactory = await ethers.getContractFactory(contractPath, signer);
 
             vaultWithEthers = await contractFactory.deploy({ value: ethers.utils.parseEther('123')});
-            await vaultWithEthers.setSellPrice(15);
-            await vaultWithEthers.setBuyPrice(10);
+            await vaultWithEthers.setSellPrice(ethers.utils.parseEther('15'));
+            await vaultWithEthers.setBuyPrice(ethers.utils.parseEther('10'));
             await vaultWithEthers.deployed();
 
             tokenContract = await deployContract(signer, TOKEN_CONTRACT_ABI, [INITIAL_AMOUNT]);
@@ -266,6 +266,11 @@ describe(contractName, () => {
         });
 
         describe('Ok scenarios', async () => {
+            // beforeEach(async () => {
+            //     await vaultWithEthers.setSellPrice(15);
+            //     await vaultWithEthers.setBuyPrice(10);
+            // })
+
             it('Should burn correctly', async () => {
                 await vaultWithEthers.setTransferAccount(tokenContract.address);
                 const amount = 20;
@@ -276,6 +281,18 @@ describe(contractName, () => {
                 await vaultWithEthers.setTransferAccount(tokenContract.address);
                 const amount = 20;
                 await expect(vaultWithEthers.burn(amount)).to.emit(vaultWithEthers, 'Burn').withArgs(signer.address, amount);
+            });
+
+            it('Should change token balances', async () => {
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
+                const amount = 20;
+                await expect(vaultWithEthers.burn(amount)).to.changeTokenBalances(tokenContract, [account1], [amount*10]);
+            });
+
+            it('Should change account balances', async () => {
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
+                const amount = 20;
+                await expect(vaultWithEthers.burn(amount)).to.changeEtherBalances([account1], [-amount]);
             });
         });
 
@@ -302,7 +319,7 @@ describe(contractName, () => {
 
             it('Should revert burn() transaction when amount is greater than vault balance', async () => {
                 await vaultWithEthers.setTransferAccount(tokenContract.address);
-                const amount = 30;
+                const amount = ethers.utils.parseEther('30');
                 await expect(vaultWithEthers.burn(amount)).to.be.revertedWith('The amount of ethers to send must be lower or equal than the Vault balance');
             });
         });
@@ -897,7 +914,7 @@ describe(contractName, () => {
                 await expect(account1.sendTransaction({
                     to: vaultContract.address,
                     value: ethers.utils.parseEther('10')
-                })).to.emit(vaultContract, 'Sell').withArgs(account1.address, ethers.utils.parseEther('5'), ethers.utils.parseEther('2'));
+                })).to.emit(vaultContract, 'Sell').withArgs(account1.address, 5, ethers.utils.parseEther('2'));
             });
         });
 
