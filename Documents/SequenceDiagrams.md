@@ -105,7 +105,7 @@ else Is not a contract
             TokenContract-->>Vault: bool
             deactivate TokenContract
 
-            alt succes == true
+            alt success == true
                 Vault-->>Vault: payable(msg.sender).transfer(ethers)
             end
 
