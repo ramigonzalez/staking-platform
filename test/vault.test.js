@@ -265,10 +265,6 @@ describe(contractName, () => {
         });
 
         describe('Ok scenarios', async () => {
-            // beforeEach(async () => {
-            //     await vaultWithEthers.setSellPrice(15);
-            //     await vaultWithEthers.setBuyPrice(10);
-            // })
 
             it('Should burn correctly', async () => {
                 await vaultWithEthers.setTransferAccount(tokenContract.address);
@@ -403,7 +399,7 @@ describe(contractName, () => {
                 await vaultContractFromEthers.addAdmin(account3.address);
                 await vaultContractFromEthers.requestWithdraw(toEthers(8.5));
 
-                const requestWithdraw = await vaultContractFromEthers._requestWithdrawDetails();
+                const requestWithdraw = await vaultContractFromEthers.connect(account2)._requestWithdrawDetails();
                 expect(requestWithdraw.initialized).to.be.true;
             });
         });
@@ -759,7 +755,7 @@ describe(contractName, () => {
             await vaultContract.requestWithdraw(toEthers(10));
             await vaultContract.connect(account2).approveWithdraw();
             await vaultContract.connect(account1).withdraw();
-            const withdrawnAmount = ethers.utils.formatEther(await vaultContract.withdrawnAmount());
+            const withdrawnAmount = ethers.utils.formatEther(await vaultContract.connect(account1).withdrawnAmount());
             expect(withdrawnAmount).to.be.equal(ethers.utils.formatEther(ethers.utils.parseEther('5')));
         });
 

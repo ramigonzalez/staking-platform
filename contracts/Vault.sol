@@ -107,7 +107,7 @@ contract Vault {
         tokenContract = ERC20Interface(_tokenContractAddress);
     }
 
-    function setFarmAddress(address _farmAddress) external isValidAddress(_farmAddress) {
+    function setFarmAddress(address _farmAddress) external onlyAdmin isValidAddress(_farmAddress) {
         farmAddress = _farmAddress;
     }
 
@@ -226,21 +226,21 @@ contract Vault {
 
         maxWithdraw += _requestWithdrawDetails.amountPerAdmin;
 
-        this.clearRequestWithdrawDetails();
+        clearRequestWithdrawDetails();
     }
 
     function rejectWithdraw() external onlyAdmin {
         require(_requestWithdrawDetails.initialized, 'There is no pending withdraw request for reject');
         require(msg.sender != _requestWithdrawDetails.requestAddress, 'Rejector administrator must be different from admin who requested it');
 
-        this.clearRequestWithdrawDetails();
+        clearRequestWithdrawDetails();
     }
 
     /**
      * @dev Reset struct informaton.
      * THIS WONT NEVER RELEASE MEMORY SLOT
      */
-    function clearRequestWithdrawDetails() external {
+    function clearRequestWithdrawDetails() private {
         _requestWithdrawDetails.initialized = false;
         _requestWithdrawDetails.amountPerAdmin = 0;
         _requestWithdrawDetails.requestAddress = address(0);
@@ -272,7 +272,7 @@ contract Vault {
     /**
      * @dev Sell tokens to the contract
      */
-    function exchangeEther(uint256 _tokensAmount) external onlyAdmin contractIsReady {
+    function exchangeEther(uint256 _tokensAmount) external contractIsReady {
         require(_tokensAmount > 0, 'The amount must be greater than 0');
         require(tokenContract.balanceOf(msg.sender) >= _tokensAmount, "The amount must be lower than the sender's balance");
         require(tokenContract.allowance(msg.sender, address(this)) >= _tokensAmount, 'Not enought allowance');
