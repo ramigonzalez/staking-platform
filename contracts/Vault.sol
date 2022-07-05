@@ -94,6 +94,7 @@ contract Vault {
         require(sellPrice > 0, 'Contract not ready: sellPrice is 0');
         require(buyPrice > 0, 'Contract not ready: buyPrice is 0');
         require(address(tokenContract) != address(0), 'Contract not ready: tokenContract is 0');
+        require(address(farmAddress) != address(0), 'Contract not ready: farmAddress is 0');
         _;
     }
 
@@ -290,7 +291,8 @@ contract Vault {
         require(_value <= 100, 'APR value is invalid');
 
         bytes memory  methodToCall = abi.encodeWithSignature('setAPR(uint8)', _value);
-        farmAddress.call(methodToCall);
+        (bool success,) = farmAddress.call(methodToCall);
+        require(success, 'Could not set Farm APR');
     }
 
     /**
