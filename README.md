@@ -1,4 +1,4 @@
-# Oblgiatorio Tecnologias Blockchain y Contratos Inteligentes
+# Obligatorio Tecnologias Blockchain y Contratos Inteligentes
 
 ## Setup del respotitorio
 
@@ -81,6 +81,6 @@ El proyecto esta estructurado de la siguiente forma:
 | ------------- | ------------- |
 | Patron Ownable | Es un patron que indica que el contrato tiene una o varias direcciones que es dueña del contrato. En nuestro caso hicimos una implementacion propia donde existe un listado de direcciones que estan permitidas a realizar ciertas acciones de gran impacto en el protocolo. La implementacion fue realizada con un mapping para evitar iteraciones al validar la pertenencia de las mismas. |
 | Github actions | |
-| Gitflow | |
+| Gitflow | Es un modelo de trabajo colaborativo que organiza el manejo de ramas en Git, clasificando las tareas (features), resolución de bugs (bugfix), correcciones urgentes (hotfix) y liberaciones (release), y ordenando el proceso para incorporarse al código fuente principal. En nuestro caso utilizamos las ramas master, develop y feature/tarea-a-desarrollar. |
 | Board | |
-| Weekly Meetings| |
+| Weekly Meetings| Organizamos reuniones semanales por Google Meet todos los lunes a las 21:30 hs, para tener una puesta a punto de las tareas designadadas a cada integrante, consultar dudas y solucionar errores o bloqueos en conjunto.|
