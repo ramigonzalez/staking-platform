@@ -286,13 +286,13 @@ describe(contractName, () => {
             it('Should change token balances', async () => {
                 await vaultWithEthers.setTransferAccount(tokenContract.address);
                 const amount = 20;
-                await expect(vaultWithEthers.burn(amount)).to.changeTokenBalances(tokenContract, [account1], [amount*10]);
+                await expect(vaultWithEthers.burn(amount)).to.changeTokenBalances(tokenContract, [signer], [-amount]);
             });
 
             it('Should change account balances', async () => {
                 await vaultWithEthers.setTransferAccount(tokenContract.address);
                 const amount = 20;
-                await expect(vaultWithEthers.burn(amount)).to.changeEtherBalances([account1], [-amount]);
+                await expect(vaultWithEthers.burn(amount)).to.changeEtherBalances([signer], [100]);
             });
         });
 
