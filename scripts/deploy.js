@@ -41,7 +41,7 @@ async function main() {
     console.log('-- Contract address:\t', vaultContract.address);
     console.log('---------------------------------------------------------------------------------------');
 
-    const tokenContract = await deployContract(deployer, protocolDeploy.tokenContractAbi, [INITIAL_AMOUNT]);
+    const tokenContract = await deployContract(deployer, protocolDeploy.tokenContractAbi, [INITIAL_AMOUNT, vaultContract.address]);
     await waitTransactionConfirmations(tokenContract, contractName.tokenContract, provider);
 
     console.log('---------------------------------------------------------------------------------------');
@@ -63,6 +63,19 @@ async function main() {
     console.log('-- Token decimals:\t', await tokenContract.decimals());
     console.log('---------------------------------------------------------------------------------------');
     console.log('-- Successfully protocol deploy');
+    console.log('---------------------------------------------------------------------------------------');
+
+    console.log('');
+    deployerBalance = ethers.utils.formatEther(await deployer.getBalance());
+    console.log('---------------------------------------------------------------------------------------');
+    console.log('-- Signer address:\t', deployer.address);
+    console.log('-- Signer balance:\t', deployerBalance);
+    console.log('---------------------------------------------------------------------------------------');
+
+    console.log('');
+    console.log('---------------------------------------------------------------------------------------');
+    console.log('-- Set sell price:\t', await vaultContract.setSellPrice(toEthers(1)));
+    console.log('-- Set buy price:\t', await vaultContract.setBuyPrice(toEthers(2)));
     console.log('---------------------------------------------------------------------------------------');
 
     console.log('');
