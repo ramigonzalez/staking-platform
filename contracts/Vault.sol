@@ -280,7 +280,7 @@ contract Vault {
     function setAPR(uint8 _value) external onlyAdmin {
         require(_value <= 100, 'APR value is invalid');
 
-        bytes memory  methodToCall = abi.encodeWithSignature('setAPR(uint256)', _value);
+        bytes memory  methodToCall = abi.encodeWithSignature('setAPR(uint8)', _value);
         farmAddress.call(methodToCall);
     }
 

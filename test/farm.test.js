@@ -1,4 +1,4 @@
-const { expect, use } = require('chai');
+const { expect } = require('chai');
 const { ZERO_ADDRESS, contractABI, toEthers, increaseOneYear, increaseTwoYears, deployContract, providers } = require('./utils');
 
 const contractName = 'Farm';
