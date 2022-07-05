@@ -138,8 +138,8 @@ contract Vault {
         require(!isContract(msg.sender), 'This function cannot be called by a contract');
         require(_amount > 0, 'Amount must be greater than 0');
 
-        uint256 ethersToSend = buyPrice * _amount / 2;
-        bool enoughEthers = ethersToSend * 10 ** tokenContract.decimals() <= address(this).balance;
+        uint256 ethersToSend = buyPrice * (_amount / (10 ** tokenContract.decimals())) / 2;
+        bool enoughEthers = ethersToSend <= address(this).balance;
         require(enoughEthers, 'The amount of ethers to send must be lower or equal than the Vault balance');
 
         bool _success = tokenContract.burn(_amount,msg.sender);
@@ -269,7 +269,7 @@ contract Vault {
         require(tokenContract.allowance(msg.sender, address(this)) >= _tokensAmount, 'Not enought allowance');
         require(maxTokenAmount >= _tokensAmount, 'Contract cannot buy more than the maximum amount');
 
-        uint256 ethersToSend = _tokensAmount * buyPrice;
+        uint256 ethersToSend = _tokensAmount * buyPrice / (10 ** tokenContract.decimals());
         require(address(this).balance >= ethersToSend, 'Not enought liquidity');
 
         tokenContract.transferFrom(msg.sender, address(this), _tokensAmount);
@@ -281,7 +281,8 @@ contract Vault {
      * @dev Buy tokens from the contract
      */
     receive() external payable contractIsReady {
-        uint256 maxAmount = msg.value / sellPrice;
+        uint256 maxAmount = msg.value / (sellPrice * (10 ** tokenContract.decimals()));
+        console.log('MaxAmout: ' + maxAmount);
         require(maxTokenAmount >= maxAmount, 'Contract cannot sell more than the maximum amount');
 
         uint256 tokensToSell;
@@ -289,7 +290,7 @@ contract Vault {
         uint256 contractBalance = tokenContract.balanceOf(address(this));
         if (maxAmount > contractBalance) {
             tokensToSell = contractBalance;
-            ethersToReturn = (maxAmount - contractBalance) * sellPrice;
+            ethersToReturn = (maxAmount - contractBalance) * (sellPrice * (10 ** tokenContract.decimals())) ;
         } else {
             tokensToSell = maxAmount;
         }

@@ -897,7 +897,7 @@ describe(contractName, () => {
                 await expect(account1.sendTransaction({
                     to: vaultContract.address,
                     value: ethers.utils.parseEther('10')
-                })).to.emit(vaultContract, 'Sell').withArgs(account1.address, 5, ethers.utils.parseEther('2'));
+                })).to.emit(vaultContract, 'Sell').withArgs(account1.address, ethers.utils.parseEther('5'), ethers.utils.parseEther('2'));
             });
         });
 
@@ -976,8 +976,10 @@ describe(contractName, () => {
                 await tokenContract.transfer(account1.address, 100);
                 await tokenContract.connect(account1).approve(vaultContract.address, 1000);
 
-                await expect(await vaultContract.connect(account1).exchangeEther(5))
-                    .to.changeEtherBalances([account1, vaultContract], [ethers.utils.parseEther('5'), ethers.utils.parseEther('-5')]);
+                const amount = 5
+                const expected = amount * ethers.utils.parseEther('1') / (10 ** await tokenContract.decimals())
+                await expect(await vaultContract.connect(account1).exchangeEther(amount))
+                    .to.changeEtherBalances([account1, vaultContract], [expected, -expected]);
             });
 
             it('Should transfer all the tokens', async () => {
@@ -1075,8 +1077,8 @@ describe(contractName, () => {
 
             it('Should revert if contract doen\'t have liquidity to pay', async () => {
                 await vaultContract.setMaxAmountToTransfer(ethers.utils.parseEther('10000'));
-                await vaultContract.setSellPrice(100);
-                await vaultContract.setBuyPrice(50);
+                await vaultContract.setSellPrice(ethers.utils.parseEther('100'));
+                await vaultContract.setBuyPrice(ethers.utils.parseEther('50'));
                 await vaultContract.setTransferAccount(tokenContract.address);
 
                 const amountToChange = ethers.utils.parseEther('1000');
