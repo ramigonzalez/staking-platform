@@ -112,6 +112,17 @@ describe(contractName, () => {
                     '_amount must be greater than 0'
                 );
             })
+
+            it('Should revert mint() transaction when approving amount is different', async () => {
+                const amount = 0;
+                await vaultWithEthers.setTransferAccount(tokenContract.address);
+                await vaultWithEthers.addAdmin(david.address);
+
+                await vaultWithEthers.mint(amount);
+                await expect(vaultWithEthers.connect(david).mint(amount + 1)).to.be.revertedWith(
+                    'Amount is not the same.'
+                );
+            })
         });
     });
 

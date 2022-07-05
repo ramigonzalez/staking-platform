@@ -60,6 +60,7 @@ contract Vault {
     struct MultiSignature {
         address sender;
         uint256 timestamp;
+        uint256 amount;
     }
 
     MultiSignature public _mint;
@@ -336,6 +337,7 @@ contract Vault {
         if (_mint.sender == address(0)){
             _mint.sender = msg.sender;
             _mint.timestamp = block.timestamp;
+            _mint.amount = _amount;
             return;
         } 
         
@@ -343,10 +345,12 @@ contract Vault {
             // Previous request expired, create a new one
             _mint.sender = msg.sender;
             _mint.timestamp = block.timestamp;
+            _mint.amount = _amount;
             return;
         }
 
         require(_mint.sender != msg.sender, 'Signer must be different.');
+        require(_mint.amount == _amount, 'Amount is not the same.');
         _mint.sender = address(0);
         tokenContract.mint(_amount);
     }
