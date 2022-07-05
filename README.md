@@ -1,4 +1,4 @@
-# Oblgiatorio Tecnologias Blockchain y Contratos Inteligentes
+# Obligatorio Tecnologias Blockchain y Contratos Inteligentes
 
 ## Setup del respotitorio
 
@@ -81,6 +81,6 @@ El proyecto esta estructurado de la siguiente forma:
 | ------------- | ------------- |
 | Patron Ownable | Es un patron que indica que el contrato tiene una o varias direcciones que es dueña del contrato. En nuestro caso hicimos una implementacion propia donde existe un listado de direcciones que estan permitidas a realizar ciertas acciones de gran impacto en el protocolo. La implementacion fue realizada con un mapping para evitar iteraciones al validar la pertenencia de las mismas. |
 | Github actions | Se definió un workflow de GitHub para ejecutar los tests automáticamente a la hora de crear un pull request (Ver [historial de ejecuciones](https://github.com/Tecnologias-Blockchain-y-Contratos-Inte/obligatorio-brenner-franco-gonzalez-lantean/actions)). El archivo de configuración se encuentra en [.gihub/workflows/run-tests.yml](https://github.com/Tecnologias-Blockchain-y-Contratos-Inte/obligatorio-brenner-franco-gonzalez-lantean/blob/develop/.github/workflows/run-tests.yml).|
-| Gitflow | |
+| Gitflow | Es un modelo de trabajo colaborativo que organiza el manejo de ramas en Git, clasificando las tareas (features), resolución de bugs (bugfix), correcciones urgentes (hotfix) y liberaciones (release), y ordenando el proceso para incorporarse al código fuente principal. En nuestro caso utilizamos las ramas master, develop y feature/tarea-a-desarrollar. |
 | Board | Se definió un board para organizar el trabajo a realizar, el mismo se encuentra disponible en el [proyecto definido dentro del repositorio](https://github.com/orgs/Tecnologias-Blockchain-y-Contratos-Inte/projects/1) en GitHub.| 
 | Weekly Meetings| Se organizaron reuniones semanales para coordinar el trabajo realizado y definir los próximos pasos a seguir. También se utilizó este espacio para resolver problemas entre todos los integrantes del equipo. |
