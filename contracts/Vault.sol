@@ -107,7 +107,7 @@ contract Vault {
         tokenContract = ERC20Interface(_tokenContractAddress);
     }
 
-    function setFarmAddress (address _farmAddress) external isValidAddress(_farmAddress) {
+    function setFarmAddress(address _farmAddress) external isValidAddress(_farmAddress) {
         farmAddress = _farmAddress;
     }
 
