@@ -19,13 +19,14 @@ describe(contractName, async () => {
 
     let farmContract;
     let tokenContract;
+    let vaultContract;
 
     describe('Deployment', async () => {
         // Before execute the test suit will deploy the contract once.
         before(async () => {
             const vaultContract = await deployContract(wallet, contractABI('Vault'));
 
-            tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+            tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
 
             farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
         });
@@ -50,7 +51,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -68,7 +69,7 @@ describe(contractName, async () => {
         describe('Reverted transactions', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -97,7 +98,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -117,7 +118,7 @@ describe(contractName, async () => {
         describe('Reverted transactions', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -146,7 +147,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -171,7 +172,7 @@ describe(contractName, async () => {
         describe('Reverted transactions', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -189,7 +190,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -232,7 +233,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -258,7 +259,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -305,7 +306,7 @@ describe(contractName, async () => {
         describe('Ok scenarios', async () => {
             beforeEach(async () => {
                 const vaultContract = await deployContract(wallet, contractABI('Vault'), []);
-                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT]);
+                tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
                 farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
 
                 await tokenContract.approve(farmContract.address, INITIAL_AMOUNT);
@@ -343,6 +344,36 @@ describe(contractName, async () => {
                 await farmContractFromOtherWallet.withdrawYield();
 
                 expect(await farmContract.getTotalYieldPaid()).to.eq(50);
+            });
+        });
+    });
+
+    describe('setAPR()', async () => {
+        beforeEach(async () => {
+            vaultContract = await deployContract(wallet, contractABI('Vault'), []);
+            tokenContract = await deployContract(wallet, contractABI('TokenContract'), [INITIAL_AMOUNT, vaultContract.address]);
+        });
+
+        describe('Ok scenarios', async () => {
+            it('setAPR() change value correctly', async () => {
+                const _value = 10;
+                farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, wallet.address]);
+                await farmContract.setAPR(_value);
+                expect(await farmContract.getAPR()).to.eq(_value);
+            });
+        });
+
+        describe('Revert transaction', async () => {
+            it('Should revert setAPR() transaction when function is called by an address other than the Vault address ', async () => {
+                const _value = 25;
+                farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, vaultContract.address]);
+                await expect(farmContract.setAPR(_value)).to.be.revertedWith("Only Vault can call this function");
+            });
+
+            it('Should revert setAPR() transaction when APR value is invalid ', async () => {
+                const _value = 105;
+                farmContract = await deployContract(wallet, FARM_ABI, [tokenContract.address, wallet.address]);
+                await expect(farmContract.setAPR(_value)).to.be.revertedWith("APR value is invalid");
             });
         });
     });
