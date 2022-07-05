@@ -85,6 +85,9 @@ async function main() {
     tx = await vaultContract.setBuyPrice(toEthers(1));
     await tx.wait();
 
+    tx = await vaultContract.setMaxAmountToTransfer(toEthers(100));
+    await tx.wait();
+
     console.log('-- Set transfer account (tokenContract):\t', tokenContract.address);
     tx = await vaultContract.setTransferAccount(tokenContract.address);
     await tx.wait();
