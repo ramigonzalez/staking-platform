@@ -81,7 +81,7 @@ Vault->>Vault: isContract(msg.sender)
 alt Is a contract
     Vault-->>Wallet 1: reverted, cannot be called by a contract
 else Is not a contract
-    alt amount = 0
+    alt amount == 0
         Vault-->>Wallet 1: reverted, Amount must be greater than 0
     else amount > 0
         Vault->>Vault: address(this).balance
@@ -105,7 +105,7 @@ else Is not a contract
             TokenContract-->>Vault: bool
             deactivate TokenContract
 
-            alt amount = 0
+            alt succes == true
                 Vault-->>Vault: payable(msg.sender).transfer(ethers)
             end
 
