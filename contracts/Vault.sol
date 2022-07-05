@@ -5,6 +5,8 @@ import 'hardhat/console.sol';
 import './Interfaces/ERC20Interface.sol';
 
 contract Vault {
+    uint256 private constant fiveMinutes = 5 * 60;
+
     uint256 public administratorsCount;
 
     /**
@@ -55,6 +57,13 @@ contract Vault {
         address requestAddress; // Address who request withdraw
         bool initialized;
     }
+
+    struct MultiSignature {
+        address sender;
+        uint256 timestamp;
+    }
+
+    MultiSignature public _mint;
 
     /**
      * @dev structure to hold request withdraw details.
@@ -134,7 +143,7 @@ contract Vault {
         buyPrice = _newBuyPrice;
     }
 
-    function burn(uint256 _amount) external {
+    function burn(uint256 _amount) external isValidTokenContractAddress {
         require(!isContract(msg.sender), 'This function cannot be called by a contract');
         require(_amount > 0, 'Amount must be greater than 0');
 
@@ -320,5 +329,24 @@ contract Vault {
         }
 
         return (codeHash != accountHash && codeHash != 0x0);
+    }
+
+    function mint(uint256 _amount) external onlyAdmin isValidTokenContractAddress {
+        if (_mint.sender == address(0)){
+            _mint.sender = msg.sender;
+            _mint.timestamp = block.timestamp;
+            return;
+        } 
+        
+        if ((block.timestamp - _mint.timestamp) > fiveMinutes) {
+            // Previous request expired, create a new one
+            _mint.sender = msg.sender;
+            _mint.timestamp = block.timestamp;
+            return;
+        }
+
+        require(_mint.sender != msg.sender, 'Signer must be different.');
+        _mint.sender = address(0);
+        tokenContract.mint(_amount);
     }
 }
