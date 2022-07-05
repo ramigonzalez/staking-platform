@@ -36,7 +36,7 @@ contract Vault {
      */
     ERC20Interface private tokenContract;
 
-        /**
+    /**
      * @dev address of the FarmContract
      */
     address private farmAddress;
