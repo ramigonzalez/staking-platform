@@ -30,15 +30,12 @@ contract TokenContract is ERC20Interface {
         _;
     }
 
-    constructor(uint256 _initialAmount) {
+    constructor(uint256 _initialAmount, address _vaultAddress) isValidAddress(_vaultAddress) {
         require(_initialAmount > 0, 'Initial amount must be greater than zero');
         totalSupply = _initialAmount;
+        vaultAddress = _vaultAddress;
         _balances[address(msg.sender)] = _initialAmount;
         emit Transfer(address(0x0), address(msg.sender), _initialAmount);
-    }
-
-    function setVaultAddress (address _vaultAddress) external isValidAddress(_vaultAddress) {
-        vaultAddress = _vaultAddress;
     }
 
     function decimals() external pure returns (uint8){
