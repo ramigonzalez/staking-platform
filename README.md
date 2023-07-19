@@ -9,14 +9,33 @@ For users, there is an additional incentive to participate in the protocol. They
 
 In summary, this staking protocol provides a secure and efficient way for users to swap $NTP tokens for ETH and earn rewards by staking their tokens. It is a valuable product that empowers users to engage with the protocol while ensuring the integrity of the system through administrator oversight.
 
-# 2. Deployed protocol details
-We deployed the protocol in Rinkeby testnet network and here are the contract addresses.
+# 2. Project description
 
-| Contract Name     | Contract Address |
-| -------------:   | :-------------: |
-| Vault             | 0xE28f717A4651a7b68840aCF4Ca54EabFD836ED10 |
-| TokenContract     | 0x24A0C8c3aFc5A9C8c82683f4A31EFDd0Ce029c32 |
-| Farm              | 0xfdfB1a80eaC3D99EaB7ecF829F62857257CA1840 |
+## Structure
+The project is structured in the following way:
+
+| Folder | Descripcion |
+| ------------- | ------------- |
+| `contracts/`  | It contains all smart contract files `.sol` as well as used interfaces inside `Interfaces/` directory |
+| `Documents/`  | Here are the model and sequence uml diagrams made using `mermaid` library |
+| `scripts/`    | Here are the deploy scripts and utils scripts |
+| `test/`       | It contains the smart contracts tests having one suite per contract created |
+| `.env`        | Environment variables file. Used by hardhat and deploy script |
+| `.hardhat.config` | Hardhat configuration file |
+| `.package.json`   | Node dependencies |
+
+## Featured features
+
+|  | Descripcion |
+| ------------- | ------------- |
+| Patron Ownable | This pattern indicates us that one or more than one address is owner of the protocol/contract. We made an implementation of it where multiple users can be administrators and consequently owners of it, allowing them to perform significantly impact actions |
+| Github actions | We defined a GitHub workflow to automatically run tests every time a PR is opened. This file is located in [.gihub/workflows/run-tests.yml](/.github/workflows/run-tests.yml)
+
+## UML Diagrams
+
+[Model Diagram](Documents/Contracts.md)
+
+[Sequence Diagram](Documents/SequenceDiagrams.md.md)
 
 # 3. Local environment setup
 ## Download required software
@@ -45,30 +64,11 @@ Note: If we do not specify a network we will be deploying to the Hardhat Network
 ```shell
 npx hardhat run scripts/deploy.js
 ```
+# 5. Deployed protocol details
+We deployed the protocol in Rinkeby testnet network and here are the contract addresses.
 
-# 5. Project description
-
-## Structure
-The project is structured in the following way:
-
-| Folder | Descripcion |
-| ------------- | ------------- |
-| `contracts/`  | It contains all smart contract files `.sol` as well as used interfaces inside `Interfaces/` directory |
-| `Documents/`  | Here are the model and sequence uml diagrams made using `mermaid` library |
-| `scripts/`    | Here are the deploy scripts and utils scripts |
-| `test/`       | It contains the smart contracts tests having one suite per contract created |
-| `.env`        | Environment variables file. Used by hardhat and deploy script |
-| `.hardhat.config` | Hardhat configuration file |
-| `.package.json`   | Node dependencies |
-
-## Featured features
-
-|  | Descripcion |
-| ------------- | ------------- |
-| Patron Ownable | This pattern indicates us that one or more than one address is owner of the protocol/contract. We made an implementation of it where multiple users can be administrators and consequently owners of it, allowing them to perform significantly impact actions |
-| Github actions | We defined a GitHub workflow to automatically run tests every time a PR is opened. This file is located in [.gihub/workflows/run-tests.yml](/.github/workflows/run-tests.yml)
-
-## UML Diagrams
-
-[Model Diagram](Documents/Contracts.md)
-[Sequence Diagram](Documents/SequenceDiagrams.md.md)
+| Contract Name     | Contract Address |
+| -------------:   | :-------------: |
+| Vault             | 0xE28f717A4651a7b68840aCF4Ca54EabFD836ED10 |
+| TokenContract     | 0x24A0C8c3aFc5A9C8c82683f4A31EFDd0Ce029c32 |
+| Farm              | 0xfdfB1a80eaC3D99EaB7ecF829F62857257CA1840 |
